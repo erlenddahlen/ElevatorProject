@@ -1,20 +1,34 @@
 package main
 
 import "./elevio"
+import "./test"
 import "time"
 import "fmt"
 
-// TO DO: Turn all the lights on, fix problem line 97, targetfloor/queue,
+// TO DO:
+// - tell master that order is finished
+// - tell master which buttons are pushed
+// - tell master its position
+
 // ny terminal der simulator ligger: ./SimElevatorServer
+
+
+
 func main() {
 	elevio.Init("localhost:15657", 4)
 	command := make(chan int)
 	currentFloor := make(chan int, 1)
 	button := make(chan elevio.ButtonEvent)
+	//buttonPushed := make(chan elevio.ButtonType)
+	lightsFromMaster := make(chan [4][3] int, 12)
+
 
 	go elevio.PollFloorSensor(currentFloor)
 	go elevio.PollButtons(button)
-	go run(currentFloor, command)
+	go test.Routine(lightsFromMaster)
+
+	go elevFSM(currentFloor, command)
+	go handleio(lightsFromMaster)
 	for {
 		select {
 		case btn := <-button:
@@ -32,7 +46,7 @@ const (
 	MOVING
 )
 
-func run(currentFloor chan int, command chan int) {
+func elevFSM(currentFloor chan int, command chan int) {
 
 	state := UNKNOWN
 	elevio.SetMotorDirection(elevio.MD_Up)
@@ -40,7 +54,7 @@ func run(currentFloor chan int, command chan int) {
 	floor := -1
 	targetFloor := -1
 	for {
-		fmt.Println(state)
+		fmt.Println("state: ", state)
 		select {
 		case targetFloor = <-command:
 			switch state {
@@ -68,6 +82,7 @@ func run(currentFloor chan int, command chan int) {
 				}
 			}
 		case floor = <-currentFloor:
+			elevio.SetFloorIndicator(floor)
 			switch state {
 			case UNKNOWN:
 				elevio.SetMotorDirection(elevio.MD_Stop)
@@ -90,16 +105,39 @@ func run(currentFloor chan int, command chan int) {
 			case IDLE:
 			case DOOR_OPEN:
 				elevio.SetDoorOpenLamp(false)
-				if targetFloor != floor {
-					fmt.Println("targetfloor ikke lik floor, sender kommando på nytt")
+				if floor == targetFloor {
 					state = IDLE
-					//command <- targetFloor // kan kopiere inn if betingelser inn her for å løse problem
+				} else if floor < targetFloor {
+					state = MOVING
+					elevio.SetMotorDirection(elevio.MD_Up)
 				} else {
-					//SendFinished()
-					state = IDLE
+					state = MOVING
+					elevio.SetMotorDirection(elevio.MD_Down)
 				}
 			case MOVING:
 			}
+		}
+	}
+}
+
+
+func handleio(lightsFromMaster chan [4][3]int) {
+	buttonMat := [4][3]int {}
+	boolValue := true
+	select{
+	case buttonMat = <- lightsFromMaster:
+		for btnType := 0; btnType < 3; btnType++ {
+				for floorIndex := 0;  floorIndex < 4; floorIndex++ {
+					fmt.Println(btnType, floorIndex)
+					if !((btnType == 1 && floorIndex == 0) || (btnType == 0 && floorIndex == 3)) {
+						if  buttonMat[floorIndex][btnType] == 0{
+							boolValue = false
+						} else {
+							boolValue = true
+						}
+						elevio.SetButtonLamp(elevio.ButtonType(btnType), floorIndex, boolValue)
+					}
+				}
 		}
 	}
 }
