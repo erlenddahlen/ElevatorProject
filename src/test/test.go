@@ -1,14 +1,25 @@
 package test
+import "fmt"
+import "../elevio"
 
 
-func testfunc() {
-		toSlave := make(chan [4][3] int, 12)
-		go Routine(toSlave)
+type ElevPos struct {
+	Floor  int
+	Id     int
+}
 
-		for {
 
-		}
+func Testfunc(update chan ElevPos, buttonFromSlave chan elevio.ButtonEvent) {
+	fmt.Println("init test")
+	for {
+		v:= <- 	update
+		w:= <- buttonFromSlave
+		fmt.Println("In test func, printing ElevPos update", v, "buttonFromSlave: ", w)
+
+
 	}
+}
+		
 
 
 
@@ -19,3 +30,4 @@ func Routine(toSlave chan<- [4][3] int){
 	testMatrix[0][0] = 1
 	toSlave <- testMatrix
 }
+
