@@ -14,7 +14,7 @@ func main() {
 	command := make(chan int)
 	go elevio.PollButtons(button)
 	go SlaveFSM.FSM(command)
-
+	//go masterInit()
 
 	for {
 		select {
@@ -23,4 +23,3 @@ func main() {
 		}
 	}
 }
-

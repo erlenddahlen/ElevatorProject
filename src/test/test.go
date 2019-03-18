@@ -19,7 +19,7 @@ func Testfunc(update chan ElevPos, buttonFromSlave chan elevio.ButtonEvent) {
 
 	}
 }
-		
+
 
 
 
@@ -30,4 +30,3 @@ func Routine(toSlave chan<- [4][3] int){
 	testMatrix[0][0] = 1
 	toSlave <- testMatrix
 }
-
