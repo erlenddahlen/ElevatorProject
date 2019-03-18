@@ -7,6 +7,7 @@ import "../elevio"
 // - Få log, Fylle log, sende log
 // - Kalkulere optimal path/finne kommandoer til slavene
 // - Sende kommandoer til slavene
+
 type Dir int
 
 const (
@@ -15,105 +16,110 @@ const (
 	STOP                = 2
 )
 
-struct elevator {
-  dir Dir = 2
-  floor = 0
-  outOrder = 0
+type elevator struct {
+  dir Dir
+  floor int
+  outOrder int
 }
 
 var elevators [3]elevator
 
 
-func manageCmd(){
-  //Inn: heisenes pos(posUpdate), buttonPushed
-  //Ut: kommando til heis
+func manageCmd(){ //own go routine
+	//Inn: heisenes pos(posUpdate), buttonPushed
+	//Ut: kommando til heis
 
-  //Declaring variables
-  position:= int
-  id:= int
-  hallMat := [4][2]int {}
-  cabMat := [4][3]int {}
-  buttonEvent := elevio.ButtonEvent {}
-
-  case position, id = <- posUpdateFromComm:
-      elevators[id].floor = position
-
-  case buttonEvent, id = <- buttonPushedFromComm
-      if buttonEvent.Button == 2 {
-        cabMat[buttonEvent.Floor][id] = 1 //Syntax should be checked
-        intoptimize()
-      } else {
-        hallMat[buttonEvent.Floor][buttonEvent.Button] = 1 //index[0][1] and [3][0] should not be accessed
-        extoptimize()
-      }
-      //should write to logfile and send out log
-  case finishedCmd, id = <- cmdFinishedFromComm
-      cabMat[finishedCmd][id] = 0
-      elevators[id].outOrder = 0
-      if elevators[id].dir < 2 {
-        hallMat[finishedCmd][elevators[id].dir]
-      }
-      intoptimize()
-      //should write to logfile and send out log
+	//Declaring variables
+	position:= int
+	id:= int
+	hallMat := [4][2]int {}
+	cabMat := [4][3]int {}
+	buttonEvent := elevio.ButtonEvent {}
+	for {
+		select{
+		case position, id = <- posUpdateFromComm:
+			elevators[id].floor = position
+		case buttonEvent, id = <- buttonPushedFromComm:
+			if buttonEvent.Button == 2 {
+				cabMat[buttonEvent.Floor][id] = 1 //Syntax should be checked
+				intoptimize()
+			} else {
+				hallMat[buttonEvent.Floor][buttonEvent.Button] = 1 //index[0][1] and [3][0] should not be accessed
+				extoptimize()
+			}
+			//should write to logfile and send out log
+		case finishedCmd, id = <- cmdFinishedFromComm:
+			cabMat[finishedCmd][id] = 0
+			elevators[id].outOrder = 0
+			if elevators[id].dir < 2 {
+				hallMat[finishedCmd][elevators[id].dir]
+			}
+			intoptimize()
+			extoptimize()
+		//should write to logfile and send out log
+		}
+	}
  }
 
 func intoptimize(int id){
     temp:= elevators[id].floor
-    runOptimize:= true
+
     if elevators[id].dir == UP {
-    for count := 0; count < 4; count++ {
-        temp = (temp + count)%4
-        if cabMat[temp][id] == 1
-          //send order and quit for loop
-          //update dir
-          //rO = false
-    }else {
-    for count := 4; count > 0; count-- {
-        temp = (temp + count)%4
-        if cabMat[temp][id] == 1
-          //send order and quit for loop
-          //update dir
-          //rO = false
-      }
-    }
-    if bool == true {
-        extoptimize()
-    }
-    }
+    	for count := 0; count < 4; count++ {
+        	temp = (temp + count)%4
+        	if cabMat[temp][id] == 1{
+          	//send order and quit for loop
+          	//update dir
+			//update outorder
+
+    		} else {
+	    		for count := 4; count > 0; count-- {
+	        		temp = (temp + count)%4
+	        		if cabMat[temp][id] == 1{
+          		//send order and quit for loop
+          		//update dir
+				//update outorder
+
+      				}
+    			}
+			}
+		}
+	}
+}
 
 func extoptimize(){
-    temp:= int
+
     // check elevators that are free
     for id := 0; id < 3; id++ {
         if elevators[id].outOrder == 0 {
             for i := 0; i < 3; i++ {
                 if hallMat[i][0] == 1{
-                    //quit for loop, do not send order
+                    //quit for loop, send order
                     //update dir, outOrder
                 }
                 if hallMat[i+1][1] == 1 {
-                    //quit for loop, do not send order
+                    //quit for loop, send order
                     //update dir, outOrder
                 }
             }
         }
-        temp = elevators[id].floor
-        if elevators[id].dir == UP
-        for count := 0; count < 4; count++ {
-            temp = (temp + count)%4
-            if hallMat[temp][0] == 1{
-              //send order and quit for loop
-            }
-        }else if elevators[id].dir == DOWN {
-            for count := 4; count > 0; count-- {
-                temp = (temp + count)%4
-                if hallMat[temp][1] == 1
-                  //send order and quit for loop
-              }
-        }
-    }
+	}
 
-    }
+    if elevators[id].dir == UP{
+    	for count := elevators[id].floor; count < elevators[id].outOrder; count++ {
+        	if hallMat[count][0] == 1{
+          		//send order and quit for loop
+        	}
+    	}
+	}
+	if elevators[id].dir == DOWN {
+        for count := elevators[id].floor; count > elevators[id].outOrder; count-- {
+            if hallMat[temp][1] == 1{
+              //send order and quit for loop
+          	}
+	  	}
+  	}
+}
 
 
   //In : hallmat, cabmat, elevators
@@ -128,9 +134,9 @@ func extoptimize(){
 
   //Out: floor, id
 
-}
 
-func masterInit(){
+
+func masterInit(){//own go routine
     for {
         switch {}
 
@@ -138,18 +144,38 @@ func masterInit(){
     }
 }
 
-func detectSlaveError(){
-    //declare/initialized
+func detectSlaveError(){//own go routine
+  timerSlave0 = time.NewTimer(7 * time.Second)
+  timerSlave1 = time.NewTimer(7 * time.Second)
+  timerSlave2 = time.NewTimer(7 * time.Second)
+  for{
+    select{
+    case elevatorPos, elevatorId = <- posUpdateFromComm:
+      switch elevatorId{
+      case 0:
+        timerSlave0 = time.NewTimer(7 * time.Second)
+      case 1:
+        timerSlave1 = time.NewTimer(7 * time.Second)
+      case 2:
+        timerSlave2 = time.NewTimer(7 * time.Second)
 
-    //for -- select -- switch
-    for {
-        select{
-            switch{
-
-            }
-        }
+      }
+    case <- timerSlave0.C:
+      if numberOfSlaves > 0{
+          slaveError <- 0
+      }
+    case <- timerSlave1.C:
+      if numberOfSlaves > 1{
+          slaveError <- 1
+      }
+    case <- timerSlave2.C:
+      if numberOfSlaves > 2{
+          slaveError <- 2
+      }
     }
+  }
 }
+
 
 numbFloors = 4
 
