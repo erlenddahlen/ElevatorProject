@@ -8,6 +8,14 @@ import "../elevio"
 // - Kalkulere optimal path/finne kommandoer til slavene
 // - Sende kommandoer til slavene
 
+type MasterControllerChannels struct {
+		cmdElevToFloor				chan Communication.Cmd
+		updateLog							chan // lage datatype til log
+		requestLogInt					chan int
+		requestLogExt					chan int
+		lightMat							chan [4][3] int
+}
+
 type Dir int
 
 const (
