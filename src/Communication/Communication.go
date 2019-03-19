@@ -1,3 +1,5 @@
+package Communication
+
 
 // Sette min id
 myId :=
@@ -22,43 +24,34 @@ type ButtonPushed struct {
 func localHandler(updateFromSlave chan ElevPos){
 for{
     select{
-    //From Slave
-    case updatedSlavePos <- updateFromSlave:
+    // From Slave
+		// Adding id to information
+		// Sending information either to internal master or to NH(external master)
+    case update <- updateFromSlave:
         updatedSlavePos.id = myId
         if masterStateE == true {
-            updatetSlavePosToMaster <- updatedSlavePos
+            updatetSlavePosToMaster <- update
         } else {
-            updatetSlavePosToNH <- updatedSlavePos
+            updatetSlavePosToNH <- update
         }
-
-        //append id and create struct elevpos
-        //if master in same node as slave
-        //    master <- updatedSlavePos
-        //else
-        //    NH <- updatedSlavePos
-
 
     case cmdFinished <- cmdFinishedFromSlave
         cmdFinished.id = myId
         if masterStateE == true {
-            ToMaster <- cmdFinished
+            cmdFinishedToMaster <- cmdFinished
         } else {
-            ToNH <- cmdFinishedFromSlave
+            cmdFinishedToNH <- cmdFinished
         }
 
 
-    append id and create struct cmdfinished
-    if master in same node as slave
-        master <- struct
-    else
-        NH <- struct
+    case buttonPushed <- buttonPushedFromSlave
+			buttonPushed.id = myId
+			if masterStateE == true {
+					buttonPushedToMaster <- buttonPushed
+			} else {
+					buttonPushedToNH <- buttonPushed
+			}
 
-    case inn <- buttonpushedfromSlave
-    append id and create struct buttonpushed
-    if master in same node as slave
-        master <- struct
-    else
-        NH <- struct
 
     // From Master
     case inn <- ElevtoflorrfromfromMaster
