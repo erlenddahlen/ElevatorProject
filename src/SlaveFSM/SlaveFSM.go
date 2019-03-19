@@ -6,12 +6,20 @@ import "time"
 import "fmt"
 
 // TO DO:
-// - tell master that order is finished, not necessary, 
+// - tell master that order is finished, not necessary,
 // master could check this from pos update and targetFloor(the command it has sent to the slave) (***)
 
 
-type state int
+// Declaring channels
+type SlaveFSMChannels struct {
+	posUpdate  			chan Communication.ElevPos
+	cmdFinished 		chan int
+	buttonPushed		chan Communication.ButtonPushed
+	buttonFromIo		chan elevio.ButtonEvent
+	currentFloor		chan int
+}
 
+type state int
 const (
 	UNKNOWN state = 1 + iota
 	IDLE
@@ -19,23 +27,23 @@ const (
 	MOVING
 )
 
-func FSM(command chan int) {
+func FSM(command chan int, chans SlaveFSMChannels, lightsFromMaster chan [4][3] int) {
 
 	// Channels in
-	currentFloor := make(chan int, 1)
-	lightsFromMaster := make(chan [4][3] int, 12)
-	buttonFromIo := make(chan elevio.ButtonEvent)
+	//currentFloor := make(chan int, 1)
+	//lightsFromMaster := make(chan [4][3] int, 12)
+	//buttonFromIo := make(chan elevio.ButtonEvent)
 
 	// Channels out
-	posUpdate := make(chan test.ElevPos, 2)
-	cmdFinished := make(chan int, 1)
-	buttonToComm := make(chan elevio.ButtonEvent, 10)
+	//posUpdate := make(chan Communication.ElevPos, 2)
+	//cmdFinished := make(chan int, 1)
+	//buttonPushed := make(chan Communication.ButtonPushed, 10)
 
-	go elevio.PollFloorSensor(currentFloor)
+	go elevio.PollFloorSensor(chans.currentFloor)
 	go test.Routine(lightsFromMaster)
-	go handleio(lightsFromMaster, buttonFromIo, buttonToComm)
-	go test.Testfunc(posUpdate, buttonToComm)
-	go elevio.PollButtons(buttonFromIo)
+	go handleio(lightsFromMaster, chans.buttonFromIo, chans.buttonPushed)
+	go test.Testfunc(chans.posUpdate, chans.buttonPushed)
+	go elevio.PollButtons(chans.buttonFromIo)
 
 	state := UNKNOWN
 	elevio.SetMotorDirection(elevio.MD_Up)
@@ -45,7 +53,7 @@ func FSM(command chan int) {
 	elevPosition := test.ElevPos{Floor: -1, Id: 0}								// sette egen ip her selv??
 
 	for {
-	
+
 		fmt.Println("state: ", state)
 		select {
 		case targetFloor = <-command:
@@ -73,9 +81,9 @@ func FSM(command chan int) {
 					elevio.SetMotorDirection(elevio.MD_Down)
 				}
 			}
-		case floor = <-currentFloor:
+		case floor = <-chans.currentFloor:
 			elevPosition.Floor = floor
-			posUpdate <- elevPosition
+			chans.posUpdate <- elevPosition
 			elevio.SetFloorIndicator(floor)
 			switch state {
 			case UNKNOWN:
@@ -85,7 +93,7 @@ func FSM(command chan int) {
 			case DOOR_OPEN:
 			case MOVING:
 				if floor == targetFloor {
-					cmdFinished <- floor
+					chan.cmdFinished <- floor			// Oppdatere struct mtp Communication
 					elevio.SetMotorDirection(elevio.MD_Stop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimer = time.NewTimer(3 * time.Second)
@@ -114,7 +122,7 @@ func FSM(command chan int) {
 }
 
 
-func handleio(lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEvent, buttonToComm chan elevio.ButtonEvent) {
+func handleio(lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEvent, buttonPushed chan elevio.ButtonEvent) {
 	buttonMat := [4][3]int {}
 	boolValue := true
 	buttonEvent := elevio.ButtonEvent {}
@@ -135,7 +143,7 @@ func handleio(lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEv
 			}
 		case buttonEvent = <- buttonFromIo:
 			fmt.Println("before updating channel")
-			buttonToComm <- buttonEvent
+			buttonPushed <- buttonEvent							// Oppdatere struct mtp Communication
 		}
 	}
 }

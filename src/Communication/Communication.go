@@ -1,7 +1,8 @@
 package Communication
 
+import "../elevio"
 
-// Sette min id
+// Sette min id, gjøres i main? så kan man ta den inn i funskjonen her?
 myId :=
 
 type ElevPos struct {
@@ -10,29 +11,76 @@ type ElevPos struct {
 }
 
 
-type CmdFinished struct {
+type Cmd struct {
 	Floor  int
 	Id     int
 }
 
 
 type ButtonPushed struct {
-	Button ButtonEvent
-    Id     int
+	Button elevio.ButtonEvent
+        Id     int
 }
 
-func localHandler(updateFromSlave chan ElevPos){
+type CommunicationChannels struct {
+        masterStateToMaster         chan masterStateE   //Make this state
+	posUpdateToMaster	    chan ElevPos
+	cmdFinishedToMaster 	    chan int
+	buttonPushedToMaster	    chan ButtonPushed
+        fullLogToMaster             chan //Lage datatype til log
+
+        cmdElevToFloorToSlave       chan Cmd
+        lightMatToSlave		    chan [4][3] int
+
+        updateLogToLog              chan //Lage datatype til log
+        reqLogIntToLog              chan int
+        reqLogExtToLog              chan int
+        mergeLogToLog               chan int
+
+        //Must fix OUT channels
+}
+
+func communicationHandler(   ){
+    // Channels inn
+        updateFromSlave := make(chan ElevPos, 2)
+        cmdFinishedFromSlave := make(chan Cmd, 2)
+        buttonPushedFromSlave := make(chan ButtonPushed, 10)
+
+        cmdElevToFloorFromMaster := make(chan Cmd, 2)
+        updateLogFromMaster := make(chan , )            // definere og lage type for log
+        reqLogIntFromMaster := make(chan int, 1)
+        reqLogExtFromMaster := make(chan int, 1)
+
+        fullLogFromLog := make(chan, )                 // definere og lage type for log
+
+    // Channels out
+        // Must make the OUT channel, the connection to the GO-network module
+        posUpdateToMaster := make(chan ElevPos, 2)
+        cmdFinishedToMaster := make(chan Cmd, 2)
+        buttonPushedToMaster := make(chan ButtonPushed, 10)
+
+        cmdElevToFloorToSlave := make(chan Cmd, 2)
+
+        updateLogToLog := make(chan , )            // definere og lage type for log
+        reqLogIntToLog := make(chan int, 1)
+        reqLogExtToLog := make(chan int, 1)
+
+        fullLogToMaster := make(chan , )            // definere og lage type for log
+
+
+
 for{
     select{
     // From Slave
-		// Adding id to information
-		// Sending information either to internal master or to NH(external master)
+
+	// Adding id to information
+	// Sending information either to internal master or to NH(external master)
     case update <- updateFromSlave:
         updatedSlavePos.id = myId
         if masterStateE == true {
-            updatetSlavePosToMaster <- update
+            updatedSlavePosToMaster <- update
         } else {
-            updatetSlavePosToNH <- update
+            OUT<- update
         }
 
     case cmdFinished <- cmdFinishedFromSlave
@@ -40,102 +88,75 @@ for{
         if masterStateE == true {
             cmdFinishedToMaster <- cmdFinished
         } else {
-            cmdFinishedToNH <- cmdFinished
+            OUT <- cmdFinished
         }
-
 
     case buttonPushed <- buttonPushedFromSlave
 			buttonPushed.id = myId
 			if masterStateE == true {
 					buttonPushedToMaster <- buttonPushed
 			} else {
-					buttonPushedToNH <- buttonPushed
+					OUT <- buttonPushed
 			}
 
 
     // From Master
-    case inn <- ElevtoflorrfromfromMaster
-    if id == own
-    slave <- cmdelevtofloor
-    else
-    NH <- cmdleevtofloor
 
-    case inn <- updatelogfromamster
-        log <- logupdate
-        NH <- logupdate
+    // Checking if id is the internal id
+    // Sending information either to internal slave or NH(external slave)
+    case cmdElevToFloor <- cmdElevToFloorFromMaster
+        if cmdElevToFloor.id == myId  {
+            cmdElevToFloorToSlave <- cmdElevToFloor
+        } else {
+            OUT <- cmdElevToFloor
+        }
 
-    case inn <- requestlogintfromamster
-        log <- reqlog
-    case inn <- requestlogextfrommaster
-        NH <- reqlog
+    // Checking if id is the internal id
+    // Sending information either to internal slave or NH(external slave)
+    case updateLog <- updateLogFromMaster
+        if updateLog.id == myId  {
+            updateLogToLog <- updateLog
+        } else {
+            OUT <- updateLog
+        }
 
-    //From log
-    case inn <- fullogfromlog
-        if masterState == own
-            master <- log
-        else
-            NH <- log
+    // Requesting internal or external log
+    case reqLogInt <- reqLogIntFromMaster
+        reqLogIntToLog <- reqLogInt
 
-    //From NH
-    case inn <- posupdate
-    master <-
+    case reqLogExt <- reqLogExtFromMaster
+        OUT <- reqLogExt
 
-    case inn <- cmdfinished
-    master <-
+    // From log
+    // Sending fullLog to either master or NH(external master)
+    case fullLog <- fullLogFromLog
+        if masterStateE == true {
+                fullLogToMaster <- fullLog
+        } else {
+                OUT <- fullLog
+        }
 
-    case inn <- buttonpushed
-    master <-
+    // From OUT
+    // All external information coming into the node from other nodes
+    case posUpdate <- posUpdateFromOUT
+        updatedSlavePosToMaster <- posUpdate
 
-    case inn <- elevtofloor
-    master <-
+    case cmdFinished <- cmdFinishedFromOUT
+        cmdFinishedToMaster <- cmdFinished
 
-    case inn <- updatelog
-    log <-
+    case buttonPushed <- buttonPushedFromOUT
+        buttonPushedToMaster <- buttonPushed
 
-    case inn <- reqlogext
-    log <-
+    case cmdElevToFloor <- cmdElevToFloorFromOUT
+        cmdElevToFloorToSlave <- cmdElevToFloor
+
+    case updateLog <- updateLogFromOUT
+        updateLogToLog <- updateLog
+
+    case reqLogExt <- reqLogExtFromOUT
+        reqLogExtToLog <- reqLogExt
+        }
     }
-}
-}
-
-func networkHandler(){
-    for
-        select
-        //fromLH
-        case inn <- posUpdate
-        append id
-        other NH <- //Need to fix UDP/channel with network module
-
-
-        //same holds for rest of the cases
-        case inn <- orderinished
-        case inn <- buttonpushed
-        case inn <- elevtofloor
-        case inn <- updatelog
-        case inn <- reqlogext
-        case inn <- fullog
-
-        //fromONH
-        case inn <- posUpdate
-        // send ACK to posUpdate-channel
-        LH <-
-
-
-        case inn <- cmdinished
-        LH <-
-
-        case inn <- buttonpushed
-        LH <-
-
-        case inn <- elevtofloor
-        LH <-
-
-        case inn <- updatelog
-        LH <-
-
-        case inn <- reqlogext
-        LH <-
-
 }
 
 func checkNetworkStatus(){
