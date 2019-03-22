@@ -40,6 +40,12 @@ type CommunicationChannels struct {
         //Must fix OUT channels
 }
 
+
+
+
+
+
+
 func communicationHandler(   ){
     // Channels inn
         updateFromSlave := make(chan ElevPos, 2)

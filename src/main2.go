@@ -65,10 +65,5 @@ func main() {
 	//go Communication.communicationHandler(SlaveFSMChans, )
 	//go masterInit()
 
-	for {
-		select {
-		case btn := <-button:
-			command <- btn.Floor
-		}
-	}
+
 }
