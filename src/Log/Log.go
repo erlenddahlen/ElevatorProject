@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"io"
 )
 
 // Channels in: newLog, mergeLog, logPos, requestLogInt
@@ -29,16 +30,11 @@ type Log struct {
 
 func main() {
 
+	// CASE: newLog
 	// Sending Log to backupfile
 	log := Log {}
 	filename := "backupfile.txt"
-	// Delete file(because we want to replace it with new content/log)
-	var err = os.Remove(filename)
-	if isError(err) {
-			return
-	}
-
-	// create file again
+	// Delete/create file again
 	var _, err1 = os.Stat(filename)
 	if os.IsNotExist(err1) {
 			var file, err1 = os.Create(filename)
@@ -46,7 +42,14 @@ func main() {
 					return
 			}
 			defer file.Close()
-	}
+	} else {
+			var err = os.Remove(filename)
+			var file, err1 = os.Create(filename)
+			if isError(err) || isError(err1){
+					return
+				}
+				defer file.Close()
+			}
 
 	fmt.Println("File Created Successfully", filename)
 
@@ -54,19 +57,27 @@ func main() {
 	file, _ := json.MarshalIndent(log, "", " ")
 	_ = ioutil.WriteFile(filename, file, 0644)
 
+// CASE: requestLogInt, out: fullLog
 	// Read file
+	var readFile, err2 = os.OpenFile(filename, os.O_RDWR, 0644)
+			if isError(err2) {
+					return
+			}
+			defer readFile.Close()
+
 	var text = make([]byte, 1024)
+
  for {
-		 _, err = file.Read(text)
+		 _, err3 := readFile.Read(text)
 
 		 // Break if finally arrived at end of file
-		 if err == io.EOF {
+		if err3 == io.EOF {
 				 break
 		 }
 
 		 // Break if error occured
-		 if err != nil && err != io.EOF {
-				 isError(err)
+		 if err3 != nil && err3 != io.EOF {
+				 isError(err3)
 				 break
 		 }
  }
@@ -75,27 +86,12 @@ func main() {
  fmt.Println(string(text))
 
 	// Undo json
-		var new = []byte(string(file))
-		fmt.Println(new)
-		var tests Log
-		error := json.Unmarshal(new, &tests)
-		if error != nil {
-			fmt.Println("error:", error)
+	var new = []byte(string(file))
+	//fmt.Println(new)
+	var tests Log
+	error := json.Unmarshal(new, &tests)
+	if error != nil {
+		fmt.Println("error:", error)
 		}
 		fmt.Println(tests)
-	}
-
-	//for range time.Tick(500*time.Millisecond) {
-		//file, err := os.Open(filename) // For read access.
-		//if err != nil {
-			//fmt.Println(err)
-		//}
-		//b := make([]byte, 4)
-    	//	file.Read(b)
-		//i := binary.BigEndian.Uint32(b)
-		//fmt.Println(i)
-		//i += 1
-		//file.WriteString(fmt.Sprintf("%d\n", i))
-		//file.Close()
-	//}
-//}
+}
