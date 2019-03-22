@@ -6,7 +6,8 @@ import (
   "../network/bcast"
   "../network/localip"
   "../network/peers"
-	 "../elevio"
+	"../elevio"
+	"../Log"
 )
 
 type HelloMsg struct {
@@ -56,6 +57,10 @@ type SlaveFSMChannels struct {
 	ButtonFromIo		chan elevio.ButtonEvent
 	CurrentFloor		chan int
 }
+
+//type LogChannels struct {
+//	fullLog	chan 		//lage datatype for Log
+//}
 
 
 func CommunicationHandler(id string, chSlave SlaveFSMChannels, chComm CommunicationChannels) {
