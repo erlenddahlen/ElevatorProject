@@ -1,4 +1,4 @@
-package Communication
+//package Communication
 
 import "../elevio"
 
@@ -24,9 +24,9 @@ type ButtonPushed struct {
 
 type CommunicationChannels struct {
         masterStateToMaster         chan masterStateE   //Make this state
-	posUpdateToMaster	    chan ElevPos
-	cmdFinishedToMaster 	    chan int
-	buttonPushedToMaster	    chan ButtonPushed
+				posUpdateToMaster	    chan ElevPos
+				cmdFinishedToMaster 	    chan int
+				buttonPushedToMaster	    chan ButtonPushed
         fullLogToMaster             chan //Lage datatype til log
 
         cmdElevToFloorToSlave       chan Cmd

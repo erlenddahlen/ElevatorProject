@@ -1,0 +1,14 @@
+#!/bin/bash
+
+
+# Will start three elevators on three different simulators
+
+# Start three simulators
+gnome-terminal --geometry=80x20+1000+0 -e './SimElevatorServer --port=15523'
+gnome-terminal --geometry=80x20+1000+400 -e './SimElevatorServer --port=15524'
+#gnome-terminal --geometry=80x20+1000+760 -e 'Simulator-v2/SimElevatorServer --port=15557'
+
+# Start three nodes
+gnome-terminal --geometry=80x20+250+0 -e 'go run main.go -id=1 -port=15523'
+gnome-terminal --geometry=80x20+250+400 -e 'go run main.go -id=2 -port=15524'
+#gnome-terminal --geometry=80x20+250+760 -e 'go run main.go -id=4 -port=15557'
