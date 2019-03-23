@@ -1,16 +1,12 @@
 package SlaveFSM
 
-import "../elevio"
-import "time"
-import "fmt"
-import 	"../CommTest"
-
-
-// TO DO:
-// - tell master that order is finished, not necessary,
-// master could check this from pos update and targetFloor(the command it has sent to the slave) (***)
-
-
+import (
+	"../elevio"
+	"time"
+	"fmt"
+	"../CommTest"
+	"strconv"
+)
 
 type state int
 const (
@@ -20,36 +16,28 @@ const (
 	MOVING
 )
 
-func FSM(command chan int, chans CommTest.SlaveFSMChannels, lightsFromMaster chan [4][3] int) {
+func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.CommunicationChannels, lightsFromMaster chan [4][3] int) {
+	id, error:=strconv.Atoi(idString)
+	if error != nil{
+		fmt.Println(error.Error())
+	}
 
-	// Channels in
-	//currentFloor := make(chan int, 1)
-	//lightsFromMaster := make(chan [4][3] int, 12)
-	//buttonFromIo := make(chan elevio.ButtonEvent)
-
-	// Channels out
-	//posUpdate := make(chan Communication.ElevPos, 2)
-	//cmdFinished := make(chan int, 1)
-	//buttonPushed := make(chan Communication.ButtonPushed, 10)
-
-	go elevio.PollFloorSensor(chans.CurrentFloor)
-	//go test.Routine(lightsFromMaster)
-	go handleio(lightsFromMaster, chans.ButtonFromIo, chans.ButtonPushed)
-	//go test.Testfunc(chans.posUpdate, chans.buttonPushed)
-	go elevio.PollButtons(chans.ButtonFromIo)
+	go elevio.PollFloorSensor(chSlave.CurrentFloor)
+	go handleio(id, lightsFromMaster, chSlave.ButtonFromIo, chSlave.ButtonPushed)
+	go elevio.PollButtons(chSlave.ButtonFromIo)
 
 	state := UNKNOWN
 	elevio.SetMotorDirection(elevio.MD_Up)
 	doorTimer := time.NewTimer(0)
 	floor := -1
 	targetFloor := -1
-	elevPosition := -1								// sette egen ip her selv??
+	elevPosition := CommTest.ElevPos{floor,id}
+	cmdFinished := CommTest.Cmd{floor, id}
 
 	for {
-
-		fmt.Println("state: ", state)
 		select {
-		case targetFloor = <-command:
+		case targetFloor = <-chComm.CmdElevToFloorToSlave:
+			fmt.Println("targetfloor:", targetFloor)
 			switch state {
 			case IDLE:
 				if floor == targetFloor {
@@ -74,9 +62,11 @@ func FSM(command chan int, chans CommTest.SlaveFSMChannels, lightsFromMaster cha
 					elevio.SetMotorDirection(elevio.MD_Down)
 				}
 			}
-		case floor = <-chans.CurrentFloor:
-			elevPosition = floor
-			chans.PosUpdate <- elevPosition
+		case floor = <-chSlave.CurrentFloor:
+			fmt.Println("Currentfloor Slave: ", floor)
+			elevPosition.Floor = floor
+			//fmt.Println("Internal PosUpdate", elevPosition)
+			chSlave.PosUpdate <- elevPosition
 			elevio.SetFloorIndicator(floor)
 			switch state {
 			case UNKNOWN:
@@ -86,13 +76,14 @@ func FSM(command chan int, chans CommTest.SlaveFSMChannels, lightsFromMaster cha
 			case DOOR_OPEN:
 			case MOVING:
 				if floor == targetFloor {
-					chans.CmdFinished <- floor			// Oppdatere struct mtp Communication
+					cmdFinished.Floor = floor
+					//fmt.Println("Internal cmdFinished", cmdFinished)
+					chSlave.CmdFinished <- cmdFinished
 					elevio.SetMotorDirection(elevio.MD_Stop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimer = time.NewTimer(3 * time.Second)
 					state = DOOR_OPEN
 				}
-
 			}
 		case <-doorTimer.C:
 			switch state {
@@ -115,10 +106,12 @@ func FSM(command chan int, chans CommTest.SlaveFSMChannels, lightsFromMaster cha
 }
 
 
-func handleio(lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEvent, buttonPushed chan elevio.ButtonEvent) {
+func handleio(id int, lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEvent,
+	 buttonPushed chan CommTest.ButtonPushed) {
 	buttonMat := [4][3]int {}
 	boolValue := true
-	buttonEvent := elevio.ButtonEvent {}
+	button := CommTest.ButtonPushed {}
+	button.Id = id
 	for {
 		select{
 		case buttonMat = <- lightsFromMaster:
@@ -134,9 +127,11 @@ func handleio(lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEv
 						}
 					}
 			}
-		case buttonEvent = <- buttonFromIo:
-			fmt.Println("before updating channel")
-			buttonPushed <- buttonEvent							// Oppdatere struct mtp Communication
+		case buttonEvent:= <- buttonFromIo:
+			button.Button = buttonEvent
+			button.Button.Floor = button.Button.Floor
+			fmt.Println("Button pushed floor", button.Button.Floor)
+			buttonPushed <- button
 		}
 	}
 }

@@ -1,32 +1,23 @@
 package test
-import "fmt"
-import "../elevio"
 
+import (
+	"fmt"
+)
 
-type ElevPos struct {
+type Cmd struct {
 	Floor  int
 	Id     int
 }
 
+func main() {
+	x := Cmd{1, 1}
+	y := Cmd{1, 1}
+	c := make(chan Cmd)
+	c<-x
+	fmt.Println(<-c)
+	c<-x
+	c<-y
+	fmt.Println(<-c)
+	fmt.Println(<-c)
 
-func Testfunc(update chan ElevPos, buttonFromSlave chan elevio.ButtonEvent) {
-	fmt.Println("init test")
-	for {
-		v:= <- 	update
-		w:= <- buttonFromSlave
-		fmt.Println("In test func, printing ElevPos update", v, "buttonFromSlave: ", w)
-
-
-	}
-}
-
-
-
-
-func Routine(toSlave chan<- [4][3] int){
-	testMatrix:=[4][3]int{}
-	testMatrix[1][1] = 1
-	testMatrix[2][2] = 1
-	testMatrix[0][0] = 1
-	toSlave <- testMatrix
 }

@@ -1,20 +1,9 @@
 package MasterController
 
-import "../elevio"
-
-// TODO:
-// - Initialisere master
-// - Få log, Fylle log, sende log
-// - Kalkulere optimal path/finne kommandoer til slavene
-// - Sende kommandoer til slavene
-
-type MasterControllerChannels struct {
-		cmdElevToFloor				chan Communication.Cmd
-		updateLog							chan // lage datatype til log
-		requestLogInt					chan int
-		requestLogExt					chan int
-		lightMat							chan [4][3] int
-}
+import (//"../elevio"
+	"fmt"
+	"../CommTest"
+)
 
 type Dir int
 
@@ -24,190 +13,251 @@ const (
 	STOP                = 2
 )
 
+type outsideOrder struct{
+  Floor int
+  Dir Dir
+}
+
 type elevator struct {
-  dir Dir
-  floor int
-  outOrder int
+  Dir Dir
+  Floor int
+  OutOrder outsideOrder
 }
 
 var elevators [3]elevator
 
+func MasterInit(chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels){
+	go ManageCmd(chComm, chMaster)
 
-func manageCmd(){ //own go routine
-	//Inn: heisenes pos(posUpdate), buttonPushed
-	//Ut: kommando til heis
+	for {
+        // select {
+		// case msg:= <- chComm.PosUpdateToMaster:
+		// 	fmt.Println("I am Master, PosUpdate: ", msg)
+		// case msg:= <- chComm.CmdFinishedToMaster:
+		// 	fmt.Println("I am Master, cmdFinished: ", msg)
+		// case msg:= <- chComm.ButtonPushedToMaster:
+		// 	fmt.Println("I am Master, buttonpushed: ", msg)
+		// 	command:= CommTest.Cmd{}
+		// 	command.Floor = msg.Button.Floor
+		// 	command.Id = msg.Id
+		// 	chMaster.CmdElevToFloor <- command
+		// }
 
+    }
+}
+func ManageCmd(chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels){
 	//Declaring variables
-	position:= int
-	id:= int
 	hallMat := [4][2]int {}
 	cabMat := [4][3]int {}
-	buttonEvent := elevio.ButtonEvent {}
+	var num int
 	for {
 		select{
-		case position, id = <- posUpdateFromComm:
-			elevators[id].floor = position
-		case buttonEvent, id = <- buttonPushedFromComm:
-			if buttonEvent.Button == 2 {
-				cabMat[buttonEvent.Floor][id] = 1 //Syntax should be checked
-				intoptimize()
+		case num = <- chComm.NumElev:
+
+
+		case msg:= <- chComm.PosUpdateToMaster:
+
+			elevators[msg.Id].Floor = msg.Floor
+
+		case msg:= <- chComm.ButtonPushedToMaster:
+			if msg.Button.Button == 2 {
+				cabMat[msg.Button.Floor][msg.Id] = 1
+				//intoptimize()
 			} else {
-				hallMat[buttonEvent.Floor][buttonEvent.Button] = 1 //index[0][1] and [3][0] should not be accessed
-				extoptimize()
+				hallMat[msg.Button.Floor][msg.Button.Button] = 1 //index[0][1] and [3][0] should not be accessed
+				go extoptimize(num, chComm, chMaster, hallMat, cabMat) //should this be a go routine?
 			}
 			//should write to logfile and send out log
-		case finishedCmd, id = <- cmdFinishedFromComm:
-			cabMat[finishedCmd][id] = 0
-			elevators[id].outOrder = 0
-			if elevators[id].dir < 2 {
-				hallMat[finishedCmd][elevators[id].dir]
+		case msg:= <- chComm.CmdFinishedToMaster:
+			fmt.Println("msg from cmd finished:", msg)
+			cabMat[msg.Floor][msg.Id] = 0
+			if elevators[msg.Id].Dir < 2{
+			hallMat[elevators[msg.Id].OutOrder.Floor][elevators[msg.Id].OutOrder.Dir]=0
 			}
-			intoptimize()
-			extoptimize()
+			// else if elevators[msg.Id].Dir==2{
+			// 	hallMat[elevators[msg.Id].OutOrder.Floor][elevators[msg.Id].OutOrder.Dir] = 0
+			// }
+			elevators[msg.Id].OutOrder.Floor = 0
+			//intoptimize()
+			go extoptimize(num, chComm, chMaster, hallMat, cabMat)
 		//should write to logfile and send out log
 		}
 	}
  }
 
-func intoptimize(int id){
-    temp:= elevators[id].floor
 
-    if elevators[id].dir == UP {
-    	for count := 0; count < 4; count++ {
-        	temp = (temp + count)%4
-        	if cabMat[temp][id] == 1{
-          	//send order and quit for loop
-          	//update dir
-			//update outorder
+func extoptimize(num int, chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels,
+	hallMat [4][2]int, cabMat[4][3]int){
 
-    		} else {
-	    		for count := 4; count > 0; count-- {
-	        		temp = (temp + count)%4
-	        		if cabMat[temp][id] == 1{
-          		//send order and quit for loop
-          		//update dir
-				//update outorder
-
-      				}
-    			}
-			}
-		}
-	}
-}
-
-func extoptimize(){
-
+	command:= CommTest.Cmd{}
+	//chMaster.CmdElevToFloor <- command
+	fmt.Println("Hallmat: ", hallMat)
     // check elevators that are free
-    for id := 0; id < 3; id++ {
-        if elevators[id].outOrder == 0 {
-            for i := 0; i < 3; i++ {
-                if hallMat[i][0] == 1{
-                    //quit for loop, send order
-                    //update dir, outOrder
+    for id := 0; id < num; id++ {
+		command.Id=id
+        if elevators[id].OutOrder.Floor == 0 {
+            for floor := 0; floor < 3; floor++ {
+
+                if hallMat[floor][0] == 1 {
+					command.Floor = floor
+					elevators[id].OutOrder.Floor = floor
+					elevators[id].OutOrder.Dir = UP
+					if elevators[id].Floor < floor{
+						elevators[id].Dir = UP
+					} else if elevators[id].Floor < floor{
+						elevators[id].Dir = STOP
+					} else {
+						elevators[id].Dir = DOWN
+					}
+					fmt.Println("Command.Floor",command.Floor)
+					chMaster.CmdElevToFloor <- command
+					break
                 }
-                if hallMat[i+1][1] == 1 {
-                    //quit for loop, send order
-                    //update dir, outOrder
+                if hallMat[floor+1][1] == 1 {
+					command.Floor = floor+1
+					elevators[id].OutOrder.Floor = floor + 1
+					elevators[id].OutOrder.Dir = DOWN
+					if elevators[id].Floor < floor+1{
+						elevators[id].Dir = UP
+					} else if elevators[id].Floor < floor{
+						elevators[id].Dir = STOP
+					}  else {
+						elevators[id].Dir = DOWN
+					}
+					fmt.Println("Command.Floor",command.Floor)
+					chMaster.CmdElevToFloor <- command
+					break
                 }
             }
         }
+
+
+	    if elevators[id].Dir == UP{
+	    	for floor := elevators[id].Floor; floor < elevators[id].OutOrder.Floor; floor++ {
+				command.Floor = floor
+	        	if hallMat[floor][0] == 1{
+					elevators[id].OutOrder.Floor = floor
+					chMaster.CmdElevToFloor <- command
+					fmt.Println("Extra opt")
+					break
+	        	}
+	    	}
+		}
+		if elevators[id].Dir == DOWN {
+	        for floor := elevators[id].Floor; floor > elevators[id].OutOrder.Floor; floor-- {
+				command.Floor = floor
+	            if hallMat[floor][1] == 1{
+					elevators[id].OutOrder.Floor = floor
+					chMaster.CmdElevToFloor <- command
+					fmt.Println("Extra opt")
+					break
+	          	}
+		  	}
+  		}
 	}
-
-    if elevators[id].dir == UP{
-    	for count := elevators[id].floor; count < elevators[id].outOrder; count++ {
-        	if hallMat[count][0] == 1{
-          		//send order and quit for loop
-        	}
-    	}
-	}
-	if elevators[id].dir == DOWN {
-        for count := elevators[id].floor; count > elevators[id].outOrder; count-- {
-            if hallMat[temp][1] == 1{
-              //send order and quit for loop
-          	}
-	  	}
-  	}
+	fmt.Println("Opt finished")
 }
 
 
-  //In : hallmat, cabmat, elevators
 
-//Optimering må skje på buttonPushed og cmdFinished
+// func intoptimize(int id){
+//     temp:= elevators[id].floor
+//
+//     if elevators[id].dir == UP {
+//     	for count := 0; count < 4; count++ {
+//         	temp = (temp + count)%4
+//         	if cabMat[temp][id] == 1{
+//           	//send order and quit for loop
+//           	//update dir
+// 			//update OutOrder
+//
+//     		} else {
+// 	    		for count := 4; count > 0; count-- {
+// 	        		temp = (temp + count)%4
+// 	        		if cabMat[temp][id] == 1{
+//           		//send order and quit for loop
+//           		//update dir
+// 				//update OutOrder
+//
+//       				}
+//     			}
+// 			}
+// 		}
+// 	}
+// }
+//
 
-//Optimeringsprosessen er tosteget på cmdFinished og buttonpushed
-// - Prioriterer cab order og setter cab order som en temp
-  // - Sjekker først cab order i current DIR, så motsatt
-// - Prøver så å optimalisere veien til temp med hallMat
-// - Sender så temp som cmd
+//
+//
+//   //In : hallmat, cabmat, elevators
+//
+// //Optimering må skje på buttonPushed og cmdFinished
+//
+// //Optimeringsprosessen er tosteget på cmdFinished og buttonpushed
+// // - Prioriterer cab order og setter cab order som en temp
+//   // - Sjekker først cab order i current DIR, så motsatt
+// // - Prøver så å optimalisere veien til temp med hallMat
+// // - Sender så temp som cmd
+//
+//   //Out: floor, id
+//
+//
+//
+//
+//
+// func detectSlaveError(){//own go routine
+//   timerSlave0 = time.NewTimer(7 * time.Second)
+//   timerSlave1 = time.NewTimer(7 * time.Second)
+//   timerSlave2 = time.NewTimer(7 * time.Second)
+//   for{
+//     select{
+//     case elevatorPos, elevatorId = <- posUpdateFromComm:
+//       switch elevatorId{
+//       case 0:
+//         timerSlave0 = time.NewTimer(7 * time.Second)
+//       case 1:
+//         timerSlave1 = time.NewTimer(7 * time.Second)
+//       case 2:
+//         timerSlave2 = time.NewTimer(7 * time.Second)
+//
+//       }
+//     case <- timerSlave0.C:
+//       if numberOfSlaves > 0{
+//           slaveError <- 0
+//       }
+//     case <- timerSlave1.C:
+//       if numberOfSlaves > 1{
+//           slaveError <- 1
+//       }
+//     case <- timerSlave2.C:
+//       if numberOfSlaves > 2{
+//           slaveError <- 2
+//       }
+//     }
+//   }
+// }
+//
+//
+// numbFloors = 4
+//
+//
 
-  //Out: floor, id
-
-
-
-func masterInit(){//own go routine
-    for {
-        switch {}
-
-
-    }
-}
-
-func detectSlaveError(){//own go routine
-  timerSlave0 = time.NewTimer(7 * time.Second)
-  timerSlave1 = time.NewTimer(7 * time.Second)
-  timerSlave2 = time.NewTimer(7 * time.Second)
-  for{
-    select{
-    case elevatorPos, elevatorId = <- posUpdateFromComm:
-      switch elevatorId{
-      case 0:
-        timerSlave0 = time.NewTimer(7 * time.Second)
-      case 1:
-        timerSlave1 = time.NewTimer(7 * time.Second)
-      case 2:
-        timerSlave2 = time.NewTimer(7 * time.Second)
-
-      }
-    case <- timerSlave0.C:
-      if numberOfSlaves > 0{
-          slaveError <- 0
-      }
-    case <- timerSlave1.C:
-      if numberOfSlaves > 1{
-          slaveError <- 1
-      }
-    case <- timerSlave2.C:
-      if numberOfSlaves > 2{
-          slaveError <- 2
-      }
-    }
-  }
-}
-
-
-numbFloors = 4
-
-
-struct outsideOrder {
-  floor int = 0
-  dir Dir = 0
-}
-
-
-func shortestPath(elevators, order) {
-  for elev in elevators {
-    if elev.outsideOrder.floor
-  }
-}
-
-
-func dist(fromFloor int, fromDir Dir, toFloor int, toDir Dir) {
-  toFloorIndex := 0
-  fromFloorIndex := 0
-  if(toDir == UP) {
-    toFloorIndex = toFloor + numbFloors
-  } else {
-    toFloorIndex = numbFloors - toFloor
-  }
-  return (toFloor- fromFloor)%(numbFloors-1)*2
-}
+//
+//
+// func shortestPath(elevators, order) {
+//   for elev in elevators {
+//     if elev.outsideOrder.floor
+//   }
+// }
+//
+//
+// func dist(fromFloor int, fromDir Dir, toFloor int, toDir Dir) {
+//   toFloorIndex := 0
+//   fromFloorIndex := 0
+//   if(toDir == UP) {
+//     toFloorIndex = toFloor + numbFloors
+//   } else {
+//     toFloorIndex = numbFloors - toFloor
+//   }
+//   return (toFloor- fromFloor)%(numbFloors-1)*2
+// }

@@ -1,5 +1,5 @@
 
-package main
+package Log
 
 import (
 	"io/ioutil"
