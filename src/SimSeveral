@@ -6,9 +6,9 @@
 # Start three simulators
 gnome-terminal --geometry=80x20+1000+0 -e './SimElevatorServer --port=15530'
 gnome-terminal --geometry=80x20+1000+400 -e './SimElevatorServer --port=15531'
-#gnome-terminal --geometry=80x20+1000+760 -e 'Simulator-v2/SimElevatorServer --port=15557'
+#gnome-terminal --geometry=80x20+1000+760 -e './SimElevatorServer --port=15532'
 
 # Start three nodes
 gnome-terminal --geometry=80x20+250+0 -e 'go run main.go -id=0 -port=15530'
 gnome-terminal --geometry=80x20+250+400 -e 'go run main.go -id=1 -port=15531'
-#gnome-terminal --geometry=80x20+250+760 -e 'go run main.go -id=4 -port=15557'
+#gnome-terminal --geometry=80x20+250+760 -e 'go run main.go -id=2 -port=15532'

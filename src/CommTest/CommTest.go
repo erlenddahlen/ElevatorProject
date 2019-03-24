@@ -123,7 +123,9 @@ func TransmitMessage(id int,MasterState bool, chSlave SlaveFSMChannels,
 			case msg:= <-chSlave.ButtonPushed:
 				if MasterState{
 					chComm.ButtonPushedToMaster <- msg
+	//				fmt.Println("Button sent to Master", msg.Button)
 				} else {
+	//				fmt.Println("Button sent to other comm", msg.Button)
 					transButtonPushed <- msg
 					//fmt.Println("Sent ButtonPushedExt")
 				}
@@ -131,6 +133,7 @@ func TransmitMessage(id int,MasterState bool, chSlave SlaveFSMChannels,
 				if msg.Id == id{
 					chComm.CmdElevToFloorToSlave <- msg.Floor
 				} else {
+//					fmt.Println("Sending cmf from master")
 					transCmd <- msg
 					//fmt.Println("Sent ButtonPushedExt")
 				}
@@ -171,10 +174,12 @@ func ReceiveMessage(id int, MasterState bool, chSlave SlaveFSMChannels, chComm C
 		case msg:= <- recButtonPushed:
 			//fmt.Println("rec buttonPushedExt")
 			if id != msg.Id && MasterState{
+//				fmt.Println("Button rec from other comm, sent to master: ", msg.Button)
 				chComm.ButtonPushedToMaster <- msg
 			}
 		case msg:= <- recCmd:
 			if id == msg.Id {
+//				fmt.Println("sending from comm")
 				chComm.CmdElevToFloorToSlave <- msg.Floor
 			}
 		}

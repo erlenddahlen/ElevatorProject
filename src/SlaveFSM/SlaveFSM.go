@@ -35,9 +35,11 @@ func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.Com
 	cmdFinished := CommTest.Cmd{floor, id}
 
 	for {
+		//fmt.Println("state: ", state)
 		select {
 		case targetFloor = <-chComm.CmdElevToFloorToSlave:
-			fmt.Println("targetfloor:", targetFloor)
+		//	fmt.Println("targetfloor", targetFloor)
+//			fmt.Println("targetfloor:", targetFloor)
 			switch state {
 			case IDLE:
 				if floor == targetFloor {
@@ -63,7 +65,8 @@ func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.Com
 				}
 			}
 		case floor = <-chSlave.CurrentFloor:
-			fmt.Println("Currentfloor Slave: ", floor)
+			fmt.Println("floor in slave", floor)
+//			fmt.Println("Currentfloor Slave: ", floor)
 			elevPosition.Floor = floor
 			//fmt.Println("Internal PosUpdate", elevPosition)
 			chSlave.PosUpdate <- elevPosition
@@ -86,12 +89,16 @@ func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.Com
 				}
 			}
 		case <-doorTimer.C:
+//			fmt.Println("doortimer")
 			switch state {
 			case IDLE:
 			case DOOR_OPEN:
 				elevio.SetDoorOpenLamp(false)
 				if floor == targetFloor {
 					state = IDLE
+					cmdFinished.Floor = floor
+					chSlave.CmdFinished <- cmdFinished
+//					fmt.Println("Sending cmd finished from slave")
 				} else if floor < targetFloor {
 					state = MOVING
 					elevio.SetMotorDirection(elevio.MD_Up)
@@ -104,6 +111,8 @@ func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.Com
 		}
 	}
 }
+
+
 
 
 func handleio(id int, lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.ButtonEvent,
@@ -129,8 +138,7 @@ func handleio(id int, lightsFromMaster chan [4][3]int, buttonFromIo chan elevio.
 			}
 		case buttonEvent:= <- buttonFromIo:
 			button.Button = buttonEvent
-			button.Button.Floor = button.Button.Floor
-			fmt.Println("Button pushed floor", button.Button.Floor)
+			fmt.Println("ButtonPushed from slave", button.Button)
 			buttonPushed <- button
 		}
 	}

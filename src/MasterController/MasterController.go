@@ -1,6 +1,7 @@
 package MasterController
 
-import (//"../elevio"
+import (
+	"../elevio"
 	"fmt"
 	"../CommTest"
 )
@@ -13,179 +14,215 @@ const (
 	STOP                = 2
 )
 
-type outsideOrder struct{
-  Floor int
-  Dir Dir
+type optPassing struct{
+	hallMat [4][2]int
+	cabMat	[4][3]int
+	num int
 }
 
 type elevator struct {
   Dir Dir
   Floor int
-  OutOrder outsideOrder
+  OrderButton elevio.ButtonEvent
 }
 
 var elevators [3]elevator
 
 func MasterInit(chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels){
+	for id:=0; id<3; id++{
+		elevators[id].Dir=STOP
+	}
 	go ManageCmd(chComm, chMaster)
 
 	for {
-        // select {
-		// case msg:= <- chComm.PosUpdateToMaster:
-		// 	fmt.Println("I am Master, PosUpdate: ", msg)
-		// case msg:= <- chComm.CmdFinishedToMaster:
-		// 	fmt.Println("I am Master, cmdFinished: ", msg)
-		// case msg:= <- chComm.ButtonPushedToMaster:
-		// 	fmt.Println("I am Master, buttonpushed: ", msg)
-		// 	command:= CommTest.Cmd{}
-		// 	command.Floor = msg.Button.Floor
-		// 	command.Id = msg.Id
-		// 	chMaster.CmdElevToFloor <- command
-		// }
-
     }
 }
+
+
 func ManageCmd(chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels){
-	//Declaring variables
+
+	num:=1
 	hallMat := [4][2]int {}
 	cabMat := [4][3]int {}
-	var num int
+	orderMatrices := optPassing{hallMat, cabMat, num}
+
 	for {
 		select{
-		case num = <- chComm.NumElev:
-
+		case orderMatrices.num = <- chComm.NumElev:
 
 		case msg:= <- chComm.PosUpdateToMaster:
-
 			elevators[msg.Id].Floor = msg.Floor
 
 		case msg:= <- chComm.ButtonPushedToMaster:
 			if msg.Button.Button == 2 {
-				cabMat[msg.Button.Floor][msg.Id] = 1
-				//intoptimize()
+				orderMatrices.cabMat[msg.Button.Floor][msg.Id] = 1
+				//orderMatrices = intoptimize(msg.Id, chMaster, orderMatrices)
 			} else {
-				hallMat[msg.Button.Floor][msg.Button.Button] = 1 //index[0][1] and [3][0] should not be accessed
-				go extoptimize(num, chComm, chMaster, hallMat, cabMat) //should this be a go routine?
+				orderMatrices.hallMat[msg.Button.Floor][msg.Button.Button] = 1 //index[0][1] and [3][0] should not be accessed
 			}
+			//orderMatrices = extoptimize(chMaster, orderMatrices)
+			fmt.Println("HallMat: ", orderMatrices.hallMat)
+			fmt.Println("CabMat: ", orderMatrices.cabMat)
 			//should write to logfile and send out log
 		case msg:= <- chComm.CmdFinishedToMaster:
-			fmt.Println("msg from cmd finished:", msg)
-			cabMat[msg.Floor][msg.Id] = 0
-			if elevators[msg.Id].Dir < 2{
-			hallMat[elevators[msg.Id].OutOrder.Floor][elevators[msg.Id].OutOrder.Dir]=0
+			orderMatrices.cabMat[msg.Floor][msg.Id] = 0
+			if elevators[msg.Id].OrderButton.Button < 2{
+			orderMatrices.hallMat[elevators[msg.Id].OrderButton.Floor][elevators[msg.Id].OrderButton.Button]=0
 			}
-			// else if elevators[msg.Id].Dir==2{
-			// 	hallMat[elevators[msg.Id].OutOrder.Floor][elevators[msg.Id].OutOrder.Dir] = 0
-			// }
-			elevators[msg.Id].OutOrder.Floor = 0
-			//intoptimize()
-			go extoptimize(num, chComm, chMaster, hallMat, cabMat)
+			elevators[msg.Id].OrderButton.Floor = 0
+			//orderMatrices = intoptimize(msg.Id, chMaster, orderMatrices)
+			//orderMatrices = extoptimize(chMaster, orderMatrices)
+
 		//should write to logfile and send out log
 		}
+
 	}
  }
 
-
-func extoptimize(num int, chComm CommTest.CommunicationChannels, chMaster CommTest.MasterControllerChannels,
-	hallMat [4][2]int, cabMat[4][3]int){
+func extoptimize(chMaster CommTest.MasterControllerChannels, orderMatrices optPassing)optPassing{
 
 	command:= CommTest.Cmd{}
-	//chMaster.CmdElevToFloor <- command
-	fmt.Println("Hallmat: ", hallMat)
+	hallMat:=orderMatrices.hallMat
+	cabMat:=orderMatrices.cabMat
+	num:= orderMatrices.num
     // check elevators that are free
     for id := 0; id < num; id++ {
 		command.Id=id
-        if elevators[id].OutOrder.Floor == 0 {
+        if elevators[id].OrderButton.Floor == 0 {
             for floor := 0; floor < 3; floor++ {
 
                 if hallMat[floor][0] == 1 {
-					command.Floor = floor
-					elevators[id].OutOrder.Floor = floor
-					elevators[id].OutOrder.Dir = UP
-					if elevators[id].Floor < floor{
-						elevators[id].Dir = UP
-					} else if elevators[id].Floor < floor{
-						elevators[id].Dir = STOP
-					} else {
-						elevators[id].Dir = DOWN
-					}
-					fmt.Println("Command.Floor",command.Floor)
-					chMaster.CmdElevToFloor <- command
-					break
+										command.Floor = floor
+										elevators[id].OrderButton.Floor = floor
+										elevators[id].OrderButton.Button = 	elevio.BT_HallUp
+										hallMat[floor][0] = 2
+										if elevators[id].Floor <= floor{
+											elevators[id].Dir = UP
+										} else {
+											elevators[id].Dir = DOWN
+										}
+										chMaster.CmdElevToFloor <- command
+										break
                 }
                 if hallMat[floor+1][1] == 1 {
-					command.Floor = floor+1
-					elevators[id].OutOrder.Floor = floor + 1
-					elevators[id].OutOrder.Dir = DOWN
-					if elevators[id].Floor < floor+1{
-						elevators[id].Dir = UP
-					} else if elevators[id].Floor < floor{
-						elevators[id].Dir = STOP
-					}  else {
-						elevators[id].Dir = DOWN
-					}
-					fmt.Println("Command.Floor",command.Floor)
-					chMaster.CmdElevToFloor <- command
-					break
+										command.Floor = floor+1
+										elevators[id].OrderButton.Floor = floor + 1
+										elevators[id].OrderButton.Button= 	elevio.BT_HallDown
+										hallMat[floor+1][1] = 2
+										if elevators[id].Floor < floor+1{
+											elevators[id].Dir = UP
+										} else {
+											elevators[id].Dir = DOWN
+										}
+										chMaster.CmdElevToFloor <- command
+										break
                 }
             }
         }
-
-
 	    if elevators[id].Dir == UP{
-	    	for floor := elevators[id].Floor; floor < elevators[id].OutOrder.Floor; floor++ {
+	    	for floor := elevators[id].Floor; floor < elevators[id].OrderButton.Floor; floor++ {
 				command.Floor = floor
 	        	if hallMat[floor][0] == 1{
-					elevators[id].OutOrder.Floor = floor
-					chMaster.CmdElevToFloor <- command
-					fmt.Println("Extra opt")
-					break
+							hallMat[elevators[id].OrderButton.Floor][0] = 1
+							elevators[id].OrderButton.Floor = floor
+							hallMat[floor][0] = 2
+							chMaster.CmdElevToFloor <- command
+							break
 	        	}
 	    	}
 		}
 		if elevators[id].Dir == DOWN {
-	        for floor := elevators[id].Floor; floor > elevators[id].OutOrder.Floor; floor-- {
-				command.Floor = floor
+	        for floor := elevators[id].Floor; floor > elevators[id].OrderButton.Floor; floor-- {
+							command.Floor = floor
 	            if hallMat[floor][1] == 1{
-					elevators[id].OutOrder.Floor = floor
-					chMaster.CmdElevToFloor <- command
-					fmt.Println("Extra opt")
-					break
+									hallMat[elevators[id].OrderButton.Floor][1] = 1
+									elevators[id].OrderButton.Floor = floor
+									hallMat[floor][1] = 2
+									chMaster.CmdElevToFloor <- command
+									break
 	          	}
 		  	}
   		}
 	}
-	fmt.Println("Opt finished")
+	return optPassing{hallMat,cabMat,num}
 }
 
 
 
-// func intoptimize(int id){
-//     temp:= elevators[id].floor
-//
-//     if elevators[id].dir == UP {
-//     	for count := 0; count < 4; count++ {
-//         	temp = (temp + count)%4
-//         	if cabMat[temp][id] == 1{
-//           	//send order and quit for loop
-//           	//update dir
-// 			//update OutOrder
-//
-//     		} else {
-// 	    		for count := 4; count > 0; count-- {
-// 	        		temp = (temp + count)%4
-// 	        		if cabMat[temp][id] == 1{
-//           		//send order and quit for loop
-//           		//update dir
-// 				//update OutOrder
-//
-//       				}
-//     			}
-// 			}
-// 		}
-// 	}
-// }
-//
+func intoptimize(id int, chMaster CommTest.MasterControllerChannels,  orderMatrices optPassing) optPassing{
+		command:= CommTest.Cmd{}
+		command.Id = id
+    currentFloor:= elevators[id].Floor
+		hallMat:=orderMatrices.hallMat
+		cabMat:=orderMatrices.cabMat
+		num:= orderMatrices.num
+
+    if elevators[id].Dir == UP || elevators[id].Dir == STOP{
+    	for floor := currentFloor; floor < 4; floor++ {
+        	if cabMat[floor][id] == 1{
+						if elevators[id].OrderButton.Button < 2{
+								if hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] == 2{
+								hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] = 1
+							}
+						}
+						command.Floor = floor
+						elevators[id].Dir = UP
+						elevators[id].OrderButton.Floor = floor
+						elevators[id].OrderButton.Button = elevio.BT_Cab
+						chMaster.CmdElevToFloor <- command
+						break
+					}
+
+		}
+		for floor := currentFloor; floor >= 0; floor-- {
+				if cabMat[floor][id] == 1{
+					if elevators[id].OrderButton.Button < 2{
+							if hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] == 2{
+							hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] = 1
+						}
+					}
+					command.Floor = floor
+					elevators[id].Dir = DOWN
+					elevators[id].OrderButton.Floor = floor
+					elevators[id].OrderButton.Button = elevio.BT_Cab
+					chMaster.CmdElevToFloor <- command
+					break
+					}
+				}
+  		} else {
+				for floor := currentFloor; floor >= 0; floor-- {
+						if cabMat[floor][id] == 1{
+							if elevators[id].OrderButton.Button < 2{
+									if hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] == 2{
+									hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] = 1
+								}
+							}
+							command.Floor = floor
+							elevators[id].OrderButton.Floor = floor
+							elevators[id].OrderButton.Button = elevio.BT_Cab
+							chMaster.CmdElevToFloor <- command
+							break
+						}
+					}
+			for floor := currentFloor; floor < 4; floor++ {
+					if cabMat[floor][id] == 1{
+						if elevators[id].OrderButton.Button < 2{
+							if hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] == 2{
+								hallMat[elevators[id].OrderButton.Floor][elevators[id].OrderButton.Button] = 1
+							}
+						}
+						command.Floor = floor
+						elevators[id].Dir = UP
+						elevators[id].OrderButton.Floor = floor
+						elevators[id].OrderButton.Button = elevio.BT_Cab
+						chMaster.CmdElevToFloor <- command
+						break
+					}
+			}
+	}
+return optPassing{hallMat,cabMat,num}
+}
+
 
 //
 //
