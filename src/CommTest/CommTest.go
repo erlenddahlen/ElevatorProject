@@ -78,7 +78,8 @@ func CommunicationHandler(MasterState bool, idString string, chSlave SlaveFSMCha
 		fmt.Println(error.Error())
 	}
 
-	go PeerUpdating(idString, chComm.NumElev)
+	//peerList := make(chan []string)
+	//go PeerUpdating(idString, chComm.NumElev, peerList)
 	go TransmitMessage(id, MasterState, chSlave, chComm, chMaster)
 	go ReceiveMessage(id, MasterState, chSlave, chComm, chMaster)
 
@@ -192,20 +193,21 @@ func ReceiveMessage(id int, MasterState bool, chSlave SlaveFSMChannels, chComm C
 	}
 }
 
-func PeerUpdating(id string, NumElev chan int) {
+func PeerUpdating(id string, NumElev chan int, peerList chan []string) {
 	peerUpdateCh := make(chan peers.PeerUpdate)
 	peerTxEnable := make(chan bool)
-	go peers.Transmitter(15648, id, peerTxEnable)
-	go peers.Receiver(15648, peerUpdateCh)
+	go peers.Transmitter(15642, id, peerTxEnable)
+	go peers.Receiver(15642, peerUpdateCh)
 
 	for {
 		select {
 		case p := <-peerUpdateCh:
-			// fmt.Printf("Peer update:\n")
-			// fmt.Printf("  Peers:    %q\n", p.Peers)
-			// fmt.Printf("  New:      %q\n", p.New)
-			// fmt.Printf("  Lost:     %q\n", p.Lost)
+			fmt.Printf("Peer update:\n")
+			fmt.Printf("  Peers:    %q\n", p.Peers)
+			fmt.Printf("  New:      %q\n", p.New)
+			fmt.Printf("  Lost:     %q\n", p.Lost)
 			NumElev <- len(p.Peers)
+			peerList <- p.Peers
 		}
 	}
 }
