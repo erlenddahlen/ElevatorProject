@@ -10,6 +10,8 @@ const (
     DOOR_OPEN_TIME = 3
 )
 
+NumOfElev:= 3
+
 type ElevState int
 const (
 	UNKNOWN ElevState = iota -1
