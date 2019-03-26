@@ -21,12 +21,6 @@ const (
 	MOVING
 )
 
-// type Dir int
-// const (
-// 	UP   Dir = 0
-// 	DOWN     = 1
-// 	STOP     = 2
-// )
 
 type Direction int
 const (
@@ -35,13 +29,7 @@ const (
 	DirUp Direction = 1
 )
 
-// type MotorDirection int
-//
-// const (
-// 	MD_Up   MotorDirection = 1
-// 	MD_Down                = -1
-// 	MD_Stop                = 0
-// )
+
 
 type Elev struct {
 	State ElevState
@@ -52,7 +40,7 @@ type Elev struct {
 
 type GlobalState struct {
 	Map map[string]Elev
-	HallRequests [4][2]int
+	HallRequests [4][2]bool
 	Id int
 }
 

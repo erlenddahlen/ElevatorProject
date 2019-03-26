@@ -79,10 +79,10 @@ func TimeToServeOrder(e Config.Elev, button Config.ButtonEvent) int {
 				return timeUsed
 			}
 			tempElevator.Queue[tempElevator.Floor][Config.BT_Cab] = false
-			if tempElevator.Dir == Config.DirUp || !Peertest.OrderAbove(tempElevator.Floor, tempElevator) {
+			if tempElevator.Dir == Config.DirUp || !Peertest.OrderAbove(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][Config.BT_HallUp] = false
 			}
-			if tempElevator.Dir == Config.DirDown || !Peertest.OrderBelow(tempElevator.Floor, tempElevator) {
+			if tempElevator.Dir == Config.DirDown || !Peertest.OrderBelow(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][Config.BT_HallDown] = false
 			}
 			timeUsed += Config.DOOR_OPEN_TIME
