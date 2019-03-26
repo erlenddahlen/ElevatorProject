@@ -96,6 +96,7 @@ func FSM(idString string, chSlave CommTest.SlaveFSMChannels, chComm CommTest.Com
 					elevio.SetMotorDirection(elevio.MD_Down)
 				}
 			}
+
 		case <-doorTimer.C:
 			//			fmt.Println("doortimer")
 			switch state {
