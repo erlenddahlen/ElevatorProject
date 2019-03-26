@@ -8,9 +8,10 @@ const (
     //timeOut      = 1 second
     TRAVEL_TIME = 5
     DOOR_OPEN_TIME = 3
+    NumOfElev = 3
 )
 
-NumOfElev:= 3
+
 
 type ElevState int
 const (
@@ -29,9 +30,9 @@ const (
 
 type Direction int
 const (
-	DirDown Direction = iota - 1
-	DirStop
-	DirUp
+	DirDown Direction =  - 1
+	DirStop Direction =  0
+	DirUp Direction = 1
 )
 
 // type MotorDirection int

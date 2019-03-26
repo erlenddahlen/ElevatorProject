@@ -9,11 +9,11 @@ import (
 
 func main(){
 
-    Queue1:= [4][3]bool{{false,false,false},{false,false,false},{false,false,false} ,{false,false,false}}
+    Queue1:= [4][3]bool{{false,false,false},{false,false,false},{false,false,false} ,{true,false,false}}
     Queue2:= [4][3]bool{{false,false,false},{false,false,false},{false,false,false} ,{false,false,false}}
 
-    temp1 := Config.Elev{Config.IDLE, Config.DirStop, 2, Queue1}
-    temp2 := Config.Elev{Config.IDLE, Config.DirStop, 3, Queue2}
+    temp1 := Config.Elev{Config.IDLE, Config.DirStop, 1, Queue1}
+    temp2 := Config.Elev{Config.IDLE, Config.DirStop, 2, Queue2}
 
     GState := Config.GlobalState{}
     GState.Map = make(map[string]Config.Elev)
@@ -34,12 +34,12 @@ func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEven
 
 	//trying to convert to map
 	i := 0
-	for key := range elevators {
+	for key, _ := range elevators {
 		times[i] = TimeToServeOrder(elevators[key], NewOrder)
-		if times[i] < times[indexBestElevator] {
+		if times[i] <= times[indexBestElevator] {
 			indexBestElevator = i
 			keyBestElevator = key
-		}
+        }
 		i++
 	}
 
@@ -71,7 +71,7 @@ func TimeToServeOrder(e Config.Elev, button Config.ButtonEvent) int {
 	case Config.DOOR_OPEN:
 		timeUsed += Config.DOOR_OPEN_TIME / 2
 	}
-
+    count := 0
 	for {
 		if Peertest.ShouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
@@ -90,5 +90,6 @@ func TimeToServeOrder(e Config.Elev, button Config.ButtonEvent) int {
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += Config.TRAVEL_TIME
+        count = count + 1
 	}
 }
