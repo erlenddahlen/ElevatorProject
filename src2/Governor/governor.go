@@ -3,6 +3,8 @@ package governor
 import (
 	"fmt"
 	"./Config"
+	"./elevio"
+	"./PeerFSM"
 )
 
 
@@ -22,13 +24,27 @@ func SpamGlobalState(){ //Update and broadcast latest globalState from one peer
 	}
 }
 
-func UpdateGlobalState(){
+func UpdateGlobalState(PeerUpdate chan Config.Elev){
 	for{
 		//Watchdog <- globalState, after 6 sec without activity in network, peer takes ownership of all global orders
 		Update.c <- GlobalState
 		select{
-			case Update <- StateUpdate.c//Arriving from NumThree
-			//clear hallmatorders and Queue for each elev by checking floor for both elevators, delete UP and DOWN
+			case Update <- StateUpdate.c //StateUpdate from other Peer
+			OutsideElev:= Update.Map[Update.Id]
+			if OutsideElev.State == DOOR_OPEN{
+					//Set HallRequests UP and DOWN in that floor to zero
+					GState.HallRequests[OutsideElev.Floor][0] = 0
+					GState.HallRequests[OutsideElev.Floor][1] = 0
+					//Set HallOrders in other elevs queue to zero
+					for _,elev := range GState.Map{
+						elev.Queue[OutsideElev.Floor][0] = 0
+						elev.Queue[OutsideElev.Floor][1] = 0
+						}
+			}
+			//Copy Caborders for OutsideElev to own map
+			GState[Update.Id].Cab = Outside.cab // denne må fikses, cab = slice Queue
+
+
 			//compare, OR global hallmat
 				//if 1 when initially 0, distribute order to best elev by also setting that queue=1 for that elev in own globalState
 
@@ -39,8 +55,16 @@ func UpdateGlobalState(){
 			//Update hallmat
 			//distribute order to best elev by also setting that req=1 for that elev in own globalState
 			//if internal -- <- ping fsm
-			case globalState[Id] = <- Elev
-			//clear hallmatorders, and queue for other elevs 
+			case globalState[Id] = <- PeerUpdate //from local
+			//clear hallmatorders, and queue for other elevs
+
+			// 1. Bytte ut hele min egen elevState/peer med denne updaten
+			// 2. Bytte ut alle sin HallRequests
+			for id := 0;  id < Config.NumOfElev; id++ {
+				GlobalState[id].
+
+			}
+
 		}
 	}
 }

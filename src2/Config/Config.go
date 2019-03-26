@@ -8,6 +8,8 @@ const (
     //timeOut      = 1 second
 )
 
+NumOfElev:= 3
+
 type ElevState int
 const (
 	UNKNOWN state = iota -1
