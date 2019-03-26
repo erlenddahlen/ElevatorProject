@@ -2,7 +2,7 @@ package governor
 
 import (
 	"fmt"
-	"./Config"
+	"../Config"
 )
 
 
@@ -40,7 +40,7 @@ func UpdateGlobalState(){
 			//distribute order to best elev by also setting that req=1 for that elev in own globalState
 			//if internal -- <- ping fsm
 			case globalState[Id] = <- Elev
-			//clear hallmatorders, and queue for other elevs 
+			//clear hallmatorders, and queue for other elevs
 		}
 	}
 }

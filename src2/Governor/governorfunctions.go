@@ -1,6 +1,6 @@
 package governor
 
-func ChooseElevator(elevators map[string]Elevator, NewOrder elevio.ButtonEvent) Elevator {
+func ChooseElevator(elevators map[int]Elevator, NewOrder elevio.ButtonEvent) Elevator {
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
 	keyBestElevator := ""

@@ -1,4 +1,4 @@
-package config
+package Config
 
 // Scaleable declaration of #floors and #elevators
 const (
@@ -6,11 +6,13 @@ const (
 //	NumElevators = 3
 	NumButtons   = 3
     //timeOut      = 1 second
+    TRAVEL_TIME = 5
+    DOOR_OPEN_TIME = 3
 )
 
 type ElevState int
 const (
-	UNKNOWN state = iota -1
+	UNKNOWN ElevState = iota -1
 	IDLE
 	DOOR_OPEN
 	MOVING
@@ -30,16 +32,35 @@ const (
 	DirUp
 )
 
+// type MotorDirection int
+//
+// const (
+// 	MD_Up   MotorDirection = 1
+// 	MD_Down                = -1
+// 	MD_Stop                = 0
+// )
 
 type Elev struct {
 	State ElevState
 	Dir   Direction
 	Floor int
-	Cab [NumFloors]bool  //Queue [NumFloors][NumButtons]bool
+	Queue [NumFloors][NumButtons]bool
 }
 
-type globalState struct {
-	Map map[int]Elev
+type GlobalState struct {
+	Map map[string]Elev
 	HallRequests [4][2]int
 	Id int
+}
+
+type ButtonType int
+const (
+	BT_HallUp   ButtonType = 0
+	BT_HallDown            = 1
+	BT_Cab                 = 2
+)
+
+type ButtonEvent struct {
+	Floor  int
+	Button ButtonType
 }
