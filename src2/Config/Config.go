@@ -69,3 +69,9 @@ type FSMChannels struct{
   PingFromGov             chan int                //from governor
   //OrderFinished           chan order
 }
+
+type GovernorChannels struct { //decalred in config file
+	internalState chan GlobalState
+	externalState chan GlobalState
+	lostElev chan int
+}
