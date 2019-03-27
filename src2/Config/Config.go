@@ -5,7 +5,7 @@ const (
 	NumFloors    = 4
 //	NumElevators = 3
 	NumButtons   = 3
-    //timeOut      = 1 second
+    TIMEOUT      = 5
     TRAVEL_TIME = 5
     DOOR_OPEN_TIME = 3
     NumOfElev = 3
@@ -46,7 +46,7 @@ type Elev struct {
 }
 
 type GlobalState struct {
-	Map map[string]Elev
+	Map map[int]Elev
 	HallRequests [4][2]bool
 	Id int
 }
