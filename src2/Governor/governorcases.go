@@ -1,9 +1,43 @@
-func UpdateGlobalState(PeerUpdate chan Config.Elev){
+import (
+	"time"
+)
+
+type GovernorChannels struct { //decalred in config file
+	internalState chan GlobalState
+	externalState chan GlobalState
+	lostElev chan int
+}
+
+
+
+func SpamGlobalState(gchan Governorchannels){ //Update and broadcast latest globalState from one peer
+	var latestState GlobalState//This is the global state
+	ticker := time.NewTicker(500 * time.Millisecond)
+	
+	transmitNet := make(chan GlobalState)
+	go bcast.Transmitter(16569, transmitNet)
+
+	for{
+		select{
+			case <- ticker.c // ticker
+				transmitNet <- latestState //sending latest state to network
+			case newUpdate:= <- gchan.latestState
+				latestState = newUpdate
+		}
+	}
+}
+
+
+
+func UpdateGlobalState(PeerUpdate chan Config.Elev, gchan Governorchannels){
+	var GState GlobalState
+
+
 	for{
 		//Watchdog <- globalState, after 6 sec without activity in network, peer takes ownership of all global orders
-		Update.c <- GlobalState
+		gchan.latestState <- GState
 		select{
-			case Update <- StateUpdate.c //StateUpdate from other Peer
+			case Update <- gchan.externalState //StateUpdate from other Peer
 			OutsideElev:= Update.Map[Update.Id]
 			if OutsideElev.State == DOOR_OPEN{
 					//Set HallRequests UP and DOWN in that floor to zero
@@ -20,7 +54,7 @@ func UpdateGlobalState(PeerUpdate chan Config.Elev){
 			//compare, OR global hallmat
 				//if 1 when initially 0, distribute order to best elev by also setting that queue=1 for that elev in own globalState
 
-			case Id <- lostElev.c
+			case Id <- gchan.lostElev
 			lostElev:= Gstate.Map[Id]
 			delete(GState, Id)
 			newOrder := Config.ButtonEvent{}
@@ -102,3 +136,30 @@ func UpdateGlobalState(PeerUpdate chan Config.Elev){
 		}
 	}
 }
+
+func NetworkState(gchan Governorchannels){
+	seen map[int]time
+	timeOut = 5 second
+
+	receiveNet := make(chan GlobalState)
+	go bcast.Receiver(16569, receiveNet)
+
+	for{
+		select{
+			StateUpdate:= <- receiveNet
+			map[StateUpdate.Id] = time.Now()
+			gchan.externalState <- StateUpdate
+
+		default:
+			for k, v := range seen:
+				t:= time.Now().Sub(v)
+				if (t > 5imeout){
+					gchan lostElev <- v.Id
+					delete(seen, v.Id)
+				}
+		}
+	}
+}
+
+
+

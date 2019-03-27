@@ -35,25 +35,27 @@ func FSM(c FSMChannels, peer Config.Elev) {
         if peer.Dir != Config.DirStop {
           peer.state = Config.MOVING
         } else {
+          if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
+            doorTimerDone= time.NewTimer(3 * time.Second)
+            // Slette ordre fra queue
+            peer.Queue[peer.Floor][Config.BT_HallUp] = false
+            peer.Queue[peer.Floor][Config.BT_HallDown] = false
+            peer.Queue[peer.Floor][Config.BT_Cab] = false
+            peer.State = Config.DOOR_OPEN
+          } else {
+            peer.State = Config.IDLE
+            }
+        }
+      case Config.MOVING:
+      case Config.DOOR_OPEN:
+        if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
           doorTimerDone= time.NewTimer(3 * time.Second)
+          // Slette ordre fra queue
+          peer.Queue[peer.Floor][Config.BT_HallUp] = false
+          peer.Queue[peer.Floor][Config.BT_HallDown] = false
+          peer.Queue[peer.Floor][Config.BT_Cab] = false
           peer.State = Config.DOOR_OPEN
         }
-          //BØR VI HA EN ELSE HER? HVA SKJER NÅR getNextDir SIER DIR = STOP?
-
-      case Config.MOVING:
-        // IKKE GJØRE NOE FORDI VI SKAL FULLFØRE PÅBEGYNT ORDRE
-
-      case Config.DOOR_OPEN:
-        // Hva gjør vi om vi står med døren åpen og får ping fra
-        // Gov om at det er oppdatering i kø, og denne oppdateringen er
-        // at det er ny ordre i samme etasje som den står i med døren åpen?
-        // For da risikerer vi å ikke stå der i 3 ekstra sek
-        // Slik gjorde vi det før, men dette er ikke lenger mulig da order.Floor ikke finnes
-        //if peer.Floor == order.Floor{
-          //doorTimerDone = time.NewTimer(3 * time.Second)
-
-        }
-
       }
       c.LocalStateUpdate <- peer
 
@@ -65,10 +67,13 @@ func FSM(c FSMChannels, peer Config.Elev) {
         elevio.SetMotorDirection(Config.DirStop)
         elevio.SetDoorOpenLamp(true)
         doorTimerDone = time.NewTimer(3 * time.Second)
+        // Slette ordre fra queue
+        peer.Queue[peer.Floor][Config.BT_HallUp] = false
+        peer.Queue[peer.Floor][Config.BT_HallDown] = false
+        peer.Queue[peer.Floor][Config.BT_Cab] = false
         peer.State = Config.DOOR_OPEN
-        c.LocalStateUpdate <- peer
       }
-
+      c.LocalStateUpdate <- peer
 
       //else if floor == 0 {
         //elevio.SetMotorDirection(elevio.MD_Up)
@@ -78,13 +83,6 @@ func FSM(c FSMChannels, peer Config.Elev) {
 
     case <-doorTimerDone.C:
       elevio.SetDoorOpenLamp(false)
-      //SENDE CMD_FINISHED ?
-      //c.OrderFinished <- order
-
-      // Slette ordre fra queue
-      peer.Queue[peer.Floor][Config.BT_HallUp] = false
-      peer.Queue[peer.Floor][Config.BT_HallDown] = false
-      peer.Queue[peer.Floor][Config.BT_Cab] = false
 
       //Oppdatere lys?
 
