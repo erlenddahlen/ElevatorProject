@@ -30,10 +30,17 @@ const (
 )
 
 
+type MotorDirection int
+
+const (
+	MD_Up   MotorDirection = 1
+	MD_Down                = -1
+	MD_Stop                = 0
+)
 
 type Elev struct {
 	State ElevState
-	Dir   Direction
+	Dir   MotorDirection
 	Floor int
 	Queue [NumFloors][NumButtons]bool
 }
@@ -54,4 +61,11 @@ const (
 type ButtonEvent struct {
 	Floor  int
 	Button ButtonType
+}
+
+type FSMChannels struct{
+  CurrentFloor            chan int                  //from elevio
+  LocalStateUpdate        chan Elev           //to governor
+  PingFromGov             chan int                //from governor
+  //OrderFinished           chan order
 }

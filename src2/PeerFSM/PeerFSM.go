@@ -7,33 +7,20 @@ import(
   "../Config"
 )
 
-type FSMChannels struct{
-  CurrentFloor            chan int                  //from elevio
-  LocalStateUpdate        chan localState           //to governor
-  pingFromGov             chan int                //from governor
-  //OrderFinished           chan order
-}
 
-
-func FSM(c FSMChannels, peer Config.Elev) {
-  //go elevio.PollFloorSensor(c.CurrentFloor)
-  //floorInit := <-c.CurrentFloor
-
+func FSM(c Config.FSMChannels, peer Config.Elev) {
   // Setting timer
   doorTimerDone := time.NewTimer(0)
 
-  // Sending first update (the initialisation)
-  c.LocalStateUpdate<-peer
-
   for{
     select{
-    case <-c.pingFromGov:       // Ny oppdatering har skjedd
-      switch peer.state {
+    case <-c.PingFromGov:
+      switch peer.State {
       case Config.IDLE:
         peer.Dir = GetNextDir(peer)
         elevio.SetMotorDirection(peer.Dir)
-        if peer.Dir != Config.DirStop {
-          peer.state = Config.MOVING
+        if peer.Dir != Config.MD_Stop {
+          peer.State = Config.MOVING
         } else {
           if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
             doorTimerDone= time.NewTimer(3 * time.Second)
@@ -60,11 +47,11 @@ func FSM(c FSMChannels, peer Config.Elev) {
       c.LocalStateUpdate <- peer
 
 
-    case currentFloor:= <-atFloor:
+  case currentFloor:= <-c.CurrentFloor:
       peer.Floor = currentFloor
       elevio.SetFloorIndicator(currentFloor)
       if ShouldStop(peer){
-        elevio.SetMotorDirection(Config.DirStop)
+        elevio.SetMotorDirection(Config.MD_Stop)
         elevio.SetDoorOpenLamp(true)
         doorTimerDone = time.NewTimer(3 * time.Second)
         // Slette ordre fra queue
@@ -87,7 +74,7 @@ func FSM(c FSMChannels, peer Config.Elev) {
       //Oppdatere lys?
 
       peer.Dir = GetNextDir(peer)
-      if peer.Dir != Config.DirStop {
+      if peer.Dir != Config.MD_Stop {
         peer.State = Config.MOVING
       } else {
         peer.State = Config.IDLE
@@ -99,34 +86,34 @@ func FSM(c FSMChannels, peer Config.Elev) {
 
 // FSM HELP FUNCTIONS
 
-func GetNextDir(peer Config.Elev)Config.Direction  {
+func GetNextDir(peer Config.Elev)Config.MotorDirection  {
 
-  if peer.Dir == Config.DirStop{
+  if peer.Dir == Config.MD_Stop{
       if OrderAbove(peer){
-          return Config.DirUp
+          return Config.MD_Up
       } else if OrderBelow(peer){
-          return Config.DirDown
+          return Config.MD_Down
       } else {
-          return Config.DirStop
+          return Config.MD_Stop
       }
-  } else if peer.Dir == Config.DirUp {
+  } else if peer.Dir == Config.MD_Up {
       if OrderAbove(peer){
-          return Config.DirUp
+          return Config.MD_Up
       } else if OrderBelow(peer) {
-          return Config.DirDown
+          return Config.MD_Down
       } else {
-          return Config.DirStop
+          return Config.MD_Stop
       }
   } else {
       if OrderBelow(peer){
-          return Config.DirDown
+          return Config.MD_Down
       } else if OrderAbove(peer){
-          return Config.DirUp
+          return Config.MD_Up
       } else {
-          return Config.DirStop
+          return Config.MD_Stop
       }
   }
-  return Config.DirStop
+  return Config.MD_Stop
 }
 
 func OrderAbove(peer Config.Elev)bool {
@@ -155,14 +142,14 @@ func ShouldStop(peer Config.Elev)bool {
     fmt.Println("peer.Dir: ", peer.Dir)
     fmt.Println("peer.Floor: ", peer.Floor)
     switch peer.Dir {
-    case Config.DirUp:
-        //fmt.Println("dirUp: ", peer.Queue[peer.Floor][Config.BT_HallUp], peer.Queue[peer.Floor][Config.BT_Cab], !OrderAbove(peer))
+    case Config.MD_Up:
+        //fmt.Println("MD_Up: ", peer.Queue[peer.Floor][Config.BT_HallUp], peer.Queue[peer.Floor][Config.BT_Cab], !OrderAbove(peer))
         return(peer.Queue[peer.Floor][Config.BT_HallUp] || peer.Queue[peer.Floor][Config.BT_Cab] || !OrderAbove(peer))
-    case Config.DirDown:
-        //fmt.Println("dirDown: ", peer.Queue[peer.Floor][Config.BT_HallDown],  peer.Queue[peer.Floor][Config.BT_Cab], !OrderBelow(peer))
+    case Config.MD_Down:
+        //fmt.Println("MD_Down: ", peer.Queue[peer.Floor][Config.BT_HallDown],  peer.Queue[peer.Floor][Config.BT_Cab], !OrderBelow(peer))
         return (peer.Queue[peer.Floor][Config.BT_HallDown] || peer.Queue[peer.Floor][Config.BT_Cab] || !OrderBelow(peer))
-    case Config.DirStop:
-        // fmt.Println("dirstop: ", peer.Queue[peer.Floor][Config.BT_HallUp ], peer.Queue[peer.Floor][Config.BT_HallDown], peer.Queue[peer.Floor][Config.BT_Cab])
+    case Config.MD_Stop:
+        // fmt.Println("MD_Stop: ", peer.Queue[peer.Floor][Config.BT_HallUp ], peer.Queue[peer.Floor][Config.BT_HallDown], peer.Queue[peer.Floor][Config.BT_Cab])
         // if(peer.Queue[peer.Floor][Config.BT_HallUp ] || peer.Queue[peer.Floor][Config.BT_HallDown] || peer.Queue[peer.Floor][Config.BT_Cab]){
         //     return true
         // }

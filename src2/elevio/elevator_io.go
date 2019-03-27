@@ -4,6 +4,7 @@ import "time"
 import "sync"
 import "net"
 import "fmt"
+import "../Config"
 
 
 
@@ -57,7 +58,7 @@ func Init(addr string, numFloors int) {
 
 
 
-func SetMotorDirection(dir MotorDirection) {
+func SetMotorDirection(dir Config.MotorDirection) {
 	_mtx.Lock()
 	defer _mtx.Unlock()
 	_conn.Write([]byte{1, byte(dir), 0, 0})
