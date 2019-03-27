@@ -71,7 +71,7 @@ type FSMChannels struct{
 }
 
 type GovernorChannels struct { //decalred in config file
-	internalState chan GlobalState
-	externalState chan GlobalState
-	lostElev chan int
+	InternalState chan GlobalState
+	ExternalState chan GlobalState
+	LostElev chan int
 }
