@@ -46,18 +46,18 @@ func main(){
         PingFromGov:        make(chan int),
     }
 
-    Queue1:= [4][3]bool{{false,false,false},{false,false,false},{false,false,true} ,{false,false,false}}
+    Queue1:= [4][3]bool{{true,false,false},{true,false,false},{false,false,true} ,{false,false,false}}
     //Queue2:= [4][3]bool{{false,false,false},{false,false,false},{false,false,false} ,{false,false,false}}
-
-    temp1 := Config.Elev{Config.IDLE, Config.MD_Stop, 3, Queue1}
+    temp1 := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
     //temp2 := Config.Elev{Config.IDLE, Config.DirStop, 2, Queue2}
 
     GState := Config.GlobalState{}
     GState.Map = make(map[string]Config.Elev)
-
+    GState.HallRequests= [4][2]bool{{true,false},{true,false},{false,false} ,{false,false}}
     GState.Map[id] = temp1
     //GState.Map["2"] = temp2
-    ticker := time.NewTicker(500 * time.Millisecond)
+    ticker := time.NewTicker(1* time.Second)
+    PeerFSM.Lights(GState)
     go elevio.PollFloorSensor(PeerFSMChannels.CurrentFloor)
     go PeerFSM.FSM(PeerFSMChannels, GState.Map[id])
 
@@ -66,13 +66,15 @@ func main(){
         select{
         case <- ticker.C:
             PeerFSMChannels.PingFromGov <- 1
-        case <- PeerFSMChannels.LocalStateUpdate:
+            PeerFSM.Lights(GState)
+        case update:= <- PeerFSMChannels.LocalStateUpdate:
+            fmt.Println("in main, floor: ", update.Floor)
         }
     }
 
     // NewButton := Config.ButtonEvent{Floor:0, Button: Config.BT_HallUp}
     // TEST OF OPTIMIZING/DISTRIBUTION
-    //
+    // Husk at OrderAbove og OrderBelow går gjennom alle knappene fra FSM, mens her vil vi bare ha 0 og 1
     // fmt.Println(ChooseElevator(GState.Map, NewButton))
     // //for{}
 }
