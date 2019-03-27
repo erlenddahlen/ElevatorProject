@@ -43,10 +43,16 @@ func main(){
     PeerFSMChannels := Config.FSMChannels{
         CurrentFloor:       make(chan int),
         LocalStateUpdate:   make(chan Config.Elev),
-        PingFromGov:        make(chan int),
+        PingFromGov:        make(chan Config.GlobalState),
+        ButtonPushed:       make(chan Config.ButtonEvent),
+        AddCabOrder:        make(chan int),
     }
 
-    Queue1:= [4][3]bool{{true,false,false},{true,false,false},{false,false,true} ,{false,false,false}}
+    GovernorChannels:= Config.GovernorChannels{
+        AddHallOrder:       make(chan Config.ButtonEvent),
+    }
+
+    Queue1:= [4][3]bool{{true,false,false},{false,true,false},{false,false,true} ,{false,false,true}}
     //Queue2:= [4][3]bool{{false,false,false},{false,false,false},{false,false,false} ,{false,false,false}}
     temp1 := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
     //temp2 := Config.Elev{Config.IDLE, Config.DirStop, 2, Queue2}
@@ -56,19 +62,25 @@ func main(){
     GState.HallRequests= [4][2]bool{{true,false},{true,false},{false,false} ,{false,false}}
     GState.Map[id] = temp1
     //GState.Map["2"] = temp2
-    ticker := time.NewTicker(1* time.Second)
-    PeerFSM.Lights(GState)
-    go elevio.PollFloorSensor(PeerFSMChannels.CurrentFloor)
-    go PeerFSM.FSM(PeerFSMChannels, GState.Map[id])
+    ticker := time.NewTicker(1 * time.Second)
+    //PeerFSM.Lights(GState, id)
+    //go elevio.PollFloorSensor(PeerFSMChannels.CurrentFloor)
+    go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, id, GState)
 
 
     for{
         select{
         case <- ticker.C:
-            PeerFSMChannels.PingFromGov <- 1
-            PeerFSM.Lights(GState)
+            PeerFSMChannels.PingFromGov <- GState
+            fmt.Println("QUEUE in main: ", GState.Map[id].Queue)
+            //PeerFSM.Lights(GState, id)
         case update:= <- PeerFSMChannels.LocalStateUpdate:
             fmt.Println("in main, floor: ", update.Floor)
+            GState.Map[id] = update
+            fmt.Println("QUEUE in main2: ", GState.Map[id].Queue)
+        case hallOrder:= <- GovernorChannels.AddHallOrder:
+            GState.HallRequests[hallOrder.Floor][hallOrder.Button] = true
+            //GState.Map[id].Queue[hallOrder.Floor][hallOrder.Button] = true
         }
     }
 

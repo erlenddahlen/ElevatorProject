@@ -7,9 +7,26 @@ import(
   "../Config"
 )
 
-func Lights(GState Config.GlobalState){
+func handleIo(chGov Config.GovernorChannels, chFSM Config.FSMChannels)  {
+    go elevio.PollButtons(chFSM.ButtonPushed)
+    go elevio.PollFloorSensor(chFSM.CurrentFloor)
+    for{
+        select{
+        case button:= <- chFSM.ButtonPushed:
+            fmt.Println("Button pushed")
+            if button.Button < 2 {
+                chGov.AddHallOrder <- button
+
+            } else {
+                chFSM.AddCabOrder <- button.Floor
+            }
+        }
+    }
+}
+
+func Lights(GState Config.GlobalState, peer Config.Elev, id string){
     for floor:= 0;  floor < Config.NumFloors; floor++ {
-        if GState.Map["minId"].Queue[floor][2] {
+        if peer.Queue[floor][2] {
             elevio.SetButtonLamp(Config.BT_Cab, floor, true)
         } else {
             elevio.SetButtonLamp(Config.BT_Cab, floor, false)
@@ -27,26 +44,34 @@ func Lights(GState Config.GlobalState){
     }
 
 }
-func FSM(c Config.FSMChannels, peer Config.Elev) {
-  // Setting timer
+func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GState Config.GlobalState) {
+  // Init doorTimer, MotorDirection and peer
   doorTimerDone := time.NewTimer(0)
   doorTimerDone.Stop()
+  go handleIo(chGov, chFSM)
   elevio.SetMotorDirection(Config.MD_Up)
-  fmt.Println(peer.Queue)
+  peer:= GState.Map[id]
+
   for{
-  fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
+      chFSM.LocalStateUpdate <- peer
+      fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
+      fmt.Println("QUEUE: ", peer.Queue)
     select{
-    case <-c.PingFromGov:
+    case cabOrderFloor:= <- chFSM.AddCabOrder:
+        peer.Queue[cabOrderFloor][2] = true
+    case update:= <-chFSM.PingFromGov:
+        peer = update.Map[id]
+        Lights(update, peer, id)
         fmt.Println("CASE A")
       switch peer.State {
       case Config.IDLE:
         peer.Dir = GetNextDir(peer)
-          fmt.Println(peer.Queue)
+        fmt.Println(peer.Queue)
         fmt.Println("Next dir: ", peer.Dir)
         elevio.SetMotorDirection(peer.Dir)
         if peer.Dir != Config.MD_Stop {
           peer.State = Config.MOVING
-                c.LocalStateUpdate <- peer
+          //c.LocalStateUpdate <- peer
         } else {
           if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
             doorTimerDone= time.NewTimer(3 * time.Second)
@@ -55,7 +80,7 @@ func FSM(c Config.FSMChannels, peer Config.Elev) {
             peer.Queue[peer.Floor][Config.BT_HallDown] = false
             peer.Queue[peer.Floor][Config.BT_Cab] = false
             peer.State = Config.DOOR_OPEN
-                  c.LocalStateUpdate <- peer
+            //c.LocalStateUpdate <- peer
           } else {
             peer.State = Config.IDLE
             }
@@ -70,12 +95,13 @@ func FSM(c Config.FSMChannels, peer Config.Elev) {
           peer.Queue[peer.Floor][Config.BT_Cab] = false
 
           peer.State = Config.DOOR_OPEN
+          //c.LocalStateUpdate <- peer
         }
       }
 
 
 
-  case currentFloor:= <-c.CurrentFloor:
+  case currentFloor:= <-chFSM.CurrentFloor:
       fmt.Println("CASE B")
       peer.Floor = currentFloor
       elevio.SetFloorIndicator(currentFloor)
@@ -94,7 +120,7 @@ func FSM(c Config.FSMChannels, peer Config.Elev) {
             peer.Queue[peer.Floor][Config.BT_Cab] = false
             peer.State = Config.DOOR_OPEN
           }
-          c.LocalStateUpdate <- peer
+          //c.LocalStateUpdate <- peer
     }
 
 
@@ -107,9 +133,6 @@ func FSM(c Config.FSMChannels, peer Config.Elev) {
     case <-doorTimerDone.C:
     fmt.Println("CASE C")
       elevio.SetDoorOpenLamp(false)
-
-      //Oppdatere lys?
-
       peer.Dir = GetNextDir(peer)
       elevio.SetMotorDirection(peer.Dir)
       fmt.Println("Doortimer done found next dir: ", peer.Dir)
@@ -118,7 +141,7 @@ func FSM(c Config.FSMChannels, peer Config.Elev) {
       } else {
         peer.State = Config.IDLE
       }
-      c.LocalStateUpdate <- peer
+      //c.LocalStateUpdate <- peer
     }
   }
 }
