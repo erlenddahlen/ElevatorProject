@@ -66,12 +66,15 @@ type ButtonEvent struct {
 type FSMChannels struct{
   CurrentFloor            chan int                  //from elevio
   LocalStateUpdate        chan Elev           //to governor
-  PingFromGov             chan int                //from governor
+  PingFromGov             chan GlobalState                //from governor	///ENDRET TIL RIKTIG CHAN
   //OrderFinished           chan order
+  ButtonPushed			  chan ButtonEvent			// ENDRING: DENNE ER LAGT TIL
+  AddCabOrder			  chan int					// ENDRING: DENNE ER LAGT TIL
 }
 
 type GovernorChannels struct { //decalred in config file
 	InternalState chan GlobalState
 	ExternalState chan GlobalState
 	LostElev chan int
+	AddHallOrder chan ButtonEvent
 }
