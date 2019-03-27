@@ -16,9 +16,9 @@ const (
 type ElevState int
 const (
 	UNKNOWN ElevState = iota -1
-	IDLE
-	DOOR_OPEN
-	MOVING
+	IDLE = 0
+	DOOR_OPEN = 1
+	MOVING = 2
 )
 
 
