@@ -85,6 +85,14 @@ func UpdateGlobalState(PeerUpdate chan Config.Elev){
 			// 1. Bytte ut hele min egen elevState/peer med denne updaten
 			Gstate.Map["minId"] = peerUpdate
 
+			// 2. Staten som oppdateringen har(alstå FSM-state) er DOOR_OPEN, fjern hall i denne etasjen
+			if peerUpdate.State == Config.DOOR_OPEN {
+				for button:= 0;  button < Config.NumButtons - 1 ; ++ {
+					GState.HallRequests[peerUpdate.Floor][button] = false
+				}
+			}
+
+			// Fra tirsdag:
 			// 2. Oppdatere global HallRequests
 			for floor:= 0;  floor < Config.NumFloors; ++ {
 				for button:=0;  < Config.NumButtons-1; ++ {
