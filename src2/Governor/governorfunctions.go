@@ -3,23 +3,56 @@ package Governor
 import (
 	"../Config"
 	"../PeerFSM"
+	 "strconv"
+	 "fmt"
+	 "sort"
 )
 
-func ChooseElevator(elevators map[int]Config.Elev, NewOrder Config.ButtonEvent) int{ //Should reurn Config.Elev
+func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEvent, GState Config.GlobalState) string{ //Should reurn Config.Elev
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
-	keyBestElevator := 0
+	keyBestElevator := GState.Id
+	//lowestkey := len(elevators)
+	fmt.Println("inside choose")
 
 	//trying to convert to map
 	i := 0
+	keys := make([]int, 0)
 	for key, _ := range elevators {
-		times[i] = TimeToServeOrder(elevators[key], NewOrder)
-		if times[i] <= times[indexBestElevator] {
-			indexBestElevator = i
-			keyBestElevator = key
-        }
-		i++
+			keyInt, error := strconv.Atoi(key)
+			if error != nil {
+					fmt.Println(error.Error())
+		}
+		keys = append(keys, keyInt)
 	}
+	sort.Ints(keys)
+	//fmt.Println(keys)
+	for k:= keys[0]; k  < len(keys); k++ {
+		keyString:= strconv.Itoa(k)
+		times[i] = TimeToServeOrder(elevators[keyString], NewOrder)
+		if times[i] <= times[indexBestElevator]{
+			indexBestElevator = i
+			keyBestElevator = keyString
+			}
+		i++
+			fmt.Println("through choose, key: ", keyBestElevator)
+	}
+
+
+	// for key, _ := range elevators {
+	// 	keyInt, error := strconv.Atoi(key)
+	// 	if error != nil {
+	// 			fmt.Println(error.Error())
+	// 	}
+
+	// 	times[i] = TimeToServeOrder(elevators[key], NewOrder)
+	// 	if times[i] <= times[indexBestElevator] && keyInt < lowestkey{
+	// 		indexBestElevator = i
+	// 		keyBestElevator = key
+	// 		lowestkey = keyInt
+  //       }
+	// 	i++
+	// }
 
 	//return elevators[keyBestElevator]
     return keyBestElevator

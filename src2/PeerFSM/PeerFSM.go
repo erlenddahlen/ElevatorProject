@@ -16,16 +16,17 @@ func handleIo(chGov Config.GovernorChannels, chFSM Config.FSMChannels)  {
             fmt.Println("Button pushed: ", button)
             if button.Button < 2 {
                 chGov.AddHallOrder <- button
-
+                fmt.Println("sent hall to Gov")
             } else {
                 //chFSM.AddCabOrder <- button.Floor
                 chFSM.AddCabOrderGov <- button.Floor
+                fmt.Println("sent cab to Gov")
             }
         }
     }
 }
 
-func Lights(GState Config.GlobalState, peer Config.Elev, id int){
+func Lights(GState Config.GlobalState, peer Config.Elev, id string){
     for floor:= 0;  floor < Config.NumFloors; floor++ {
         if peer.Queue[floor][2] {
             elevio.SetButtonLamp(Config.BT_Cab, floor, true)
@@ -45,7 +46,7 @@ func Lights(GState Config.GlobalState, peer Config.Elev, id int){
     }
 
 }
-func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id int, GState Config.GlobalState) {
+func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GState Config.GlobalState) {
   // Init doorTimer, MotorDirection and peer
   doorTimerDone := time.NewTimer(0)
   doorTimerDone.Stop()
@@ -58,7 +59,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id int, GState
       chFSM.LocalStateUpdate <- peer
       // fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
       //fmt.Println("QUEUE in FSM: ", peer.Queue)
-      Lights(GState, peer, id)
+      //Lights(GState, peer, id)
     select{
     // case cabOrderFloor:= <- chFSM.AddCabOrder:
     //     peer.Queue[cabOrderFloor][2] = true
@@ -66,12 +67,13 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id int, GState
 
     case update:= <-chFSM.PingFromGov:
         peer.Queue = update.Map[id].Queue
+        fmt.Println("Q.p: ", peer.Queue)
         //Lights(update, peer, id)
         //fmt.Println("CASE A")
       switch peer.State {
       case Config.IDLE:
         peer.Dir = GetNextDir(peer)
-        //fmt.Println(peer.Queue)
+
         //fmt.Println("Next dir: ", peer.Dir)
         elevio.SetMotorDirection(peer.Dir)
         if peer.Dir != Config.MD_Stop {
@@ -87,6 +89,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id int, GState
             peer.Queue[peer.Floor][Config.BT_Cab] = false
             peer.State = Config.DOOR_OPEN
             //c.LocalStateUpdate <- peer
+            chFSM.LocalStateUpdate <- peer
           } else {
             peer.State = Config.IDLE
             }

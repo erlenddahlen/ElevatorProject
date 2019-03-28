@@ -46,9 +46,9 @@ type Elev struct {
 }
 
 type GlobalState struct {
-	Map map[int]Elev
+	Map map[string]Elev
 	HallRequests [4][2]bool
-	Id int
+	Id string
 }
 
 type ButtonType int
@@ -70,12 +70,12 @@ type FSMChannels struct{
   //OrderFinished           chan order
   ButtonPushed			  chan ButtonEvent			// ENDRING: DENNE ER LAGT TIL
   AddCabOrder			  chan int					// ENDRING: DENNE ER LAGT TIL
-	AddCabOrderGov chan int 
+	AddCabOrderGov chan int
 }
 
 type GovernorChannels struct { //decalred in config file
 	InternalState chan GlobalState
 	ExternalState chan GlobalState
-	LostElev chan int
+	LostElev chan string
 	AddHallOrder chan ButtonEvent
 }

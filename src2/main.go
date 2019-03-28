@@ -9,7 +9,7 @@ import (
     //"time"
     "flag"
     //"os"
-    "strconv"
+
     //"./Peertest"
 )
 
@@ -34,10 +34,7 @@ func main(){
     //     id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
     // }
 
-    idInt, error := strconv.Atoi(id)
-    if error != nil {
-        fmt.Println(error.Error())
-    }
+
 
 
     PeerFSMChannels := Config.FSMChannels{
@@ -52,17 +49,17 @@ func main(){
     GovernorChannels:= Config.GovernorChannels{
         InternalState:      make(chan Config.GlobalState),
         ExternalState:      make(chan Config.GlobalState),
-        LostElev:           make(chan int),
+        LostElev:           make(chan string),
         AddHallOrder:       make(chan Config.ButtonEvent),
     }
     var GState Config.GlobalState
-    GState = Governor.GovernorInit(GState, idInt)
+    GState = Governor.GovernorInit(GState, id)
     //fmt.Println("Gstate init: ", GState)
 
-    go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, idInt, GState)
+    go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, id, GState)
     go Governor.SpamGlobalState(GovernorChannels)
     go Governor.NetworkState(GovernorChannels)
-    go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, idInt, GState)
+    go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, id, GState)
 
 
     for{
