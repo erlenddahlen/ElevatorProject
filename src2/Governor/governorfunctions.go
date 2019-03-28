@@ -1,4 +1,4 @@
-package governor
+package Governor
 //
 import (
 	"../Config"

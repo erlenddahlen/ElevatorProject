@@ -13,18 +13,19 @@ func handleIo(chGov Config.GovernorChannels, chFSM Config.FSMChannels)  {
     for{
         select{
         case button:= <- chFSM.ButtonPushed:
-            fmt.Println("Button pushed")
+            fmt.Println("Button pushed: ", button)
             if button.Button < 2 {
                 chGov.AddHallOrder <- button
 
             } else {
-                chFSM.AddCabOrder <- button.Floor
+                //chFSM.AddCabOrder <- button.Floor
+                chFSM.AddCabOrderGov <- button.Floor
             }
         }
     }
 }
 
-func Lights(GState Config.GlobalState, peer Config.Elev, id string){
+func Lights(GState Config.GlobalState, peer Config.Elev, id int){
     for floor:= 0;  floor < Config.NumFloors; floor++ {
         if peer.Queue[floor][2] {
             elevio.SetButtonLamp(Config.BT_Cab, floor, true)
@@ -44,7 +45,7 @@ func Lights(GState Config.GlobalState, peer Config.Elev, id string){
     }
 
 }
-func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GState Config.GlobalState) {
+func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id int, GState Config.GlobalState) {
   // Init doorTimer, MotorDirection and peer
   doorTimerDone := time.NewTimer(0)
   doorTimerDone.Stop()
@@ -53,27 +54,32 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
   peer:= GState.Map[id]
 
   for{
+
       chFSM.LocalStateUpdate <- peer
-      fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
-      fmt.Println("QUEUE: ", peer.Queue)
+      // fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
+      //fmt.Println("QUEUE in FSM: ", peer.Queue)
+      Lights(GState, peer, id)
     select{
-    case cabOrderFloor:= <- chFSM.AddCabOrder:
-        peer.Queue[cabOrderFloor][2] = true
+    // case cabOrderFloor:= <- chFSM.AddCabOrder:
+    //     peer.Queue[cabOrderFloor][2] = true
+    //
+
     case update:= <-chFSM.PingFromGov:
-        peer = update.Map[id]
-        Lights(update, peer, id)
-        fmt.Println("CASE A")
+        peer.Queue = update.Map[id].Queue
+        //Lights(update, peer, id)
+        //fmt.Println("CASE A")
       switch peer.State {
       case Config.IDLE:
         peer.Dir = GetNextDir(peer)
-        fmt.Println(peer.Queue)
-        fmt.Println("Next dir: ", peer.Dir)
+        //fmt.Println(peer.Queue)
+        //fmt.Println("Next dir: ", peer.Dir)
         elevio.SetMotorDirection(peer.Dir)
         if peer.Dir != Config.MD_Stop {
           peer.State = Config.MOVING
           //c.LocalStateUpdate <- peer
         } else {
           if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
+            elevio.SetDoorOpenLamp(true)
             doorTimerDone= time.NewTimer(3 * time.Second)
             // Slette ordre fra queue
             peer.Queue[peer.Floor][Config.BT_HallUp] = false
@@ -88,6 +94,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
       case Config.MOVING:
       case Config.DOOR_OPEN:
         if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2]{
+          elevio.SetDoorOpenLamp(true)
           doorTimerDone= time.NewTimer(3 * time.Second)
           // Slette ordre fra queue
           peer.Queue[peer.Floor][Config.BT_HallUp] = false
@@ -102,13 +109,15 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
 
 
   case currentFloor:= <-chFSM.CurrentFloor:
-      fmt.Println("CASE B")
+      //fmt.Println("CASE B")
       peer.Floor = currentFloor
       elevio.SetFloorIndicator(currentFloor)
       switch peer.State {
       case Config.UNKNOWN:
+          //fmt.Println("case UNKNOWN")
               elevio.SetMotorDirection(elevio.MD_Stop)
               peer.State = Config.IDLE
+              //fmt.Println("State i unknown: ", peer.State)
       case Config.MOVING:
           if ShouldStop(peer){
             elevio.SetMotorDirection(Config.MD_Stop)
@@ -131,11 +140,11 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
       //}
 
     case <-doorTimerDone.C:
-    fmt.Println("CASE C")
+    //fmt.Println("CASE C")
       elevio.SetDoorOpenLamp(false)
       peer.Dir = GetNextDir(peer)
       elevio.SetMotorDirection(peer.Dir)
-      fmt.Println("Doortimer done found next dir: ", peer.Dir)
+      //fmt.Println("Doortimer done found next dir: ", peer.Dir)
       if peer.Dir != Config.MD_Stop {
         peer.State = Config.MOVING
       } else {
@@ -183,7 +192,6 @@ func OrderAbove(peer Config.Elev)bool {
   for floor:= peer.Floor + 1; floor < Config.NumFloors; floor++{
     for button:= 0; button < Config.NumButtons; button++{
         if peer.Queue[floor][button]{
-            fmt.Println("order above")
             return true
         }
     }
@@ -195,7 +203,6 @@ func OrderBelow(peer Config.Elev)bool {
   for floor:= 0; floor < peer.Floor; floor++{
     for button:= 0; button < Config.NumButtons; button++{
         if peer.Queue[floor][button]{
-                        fmt.Println("order below")
             return true
         }
     }

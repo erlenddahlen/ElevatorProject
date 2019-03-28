@@ -70,6 +70,7 @@ type FSMChannels struct{
   //OrderFinished           chan order
   ButtonPushed			  chan ButtonEvent			// ENDRING: DENNE ER LAGT TIL
   AddCabOrder			  chan int					// ENDRING: DENNE ER LAGT TIL
+	AddCabOrderGov chan int 
 }
 
 type GovernorChannels struct { //decalred in config file
