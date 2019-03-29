@@ -48,7 +48,7 @@ func main(){
 
     GovernorChannels:= Config.GovernorChannels{
         InternalState:      make(chan Config.GlobalState),
-        ExternalState:      make(chan Config.GlobalState),
+        ExternalState:      make(chan Config.GlobalState,100),
         LostElev:           make(chan string),
         AddHallOrder:       make(chan Config.ButtonEvent),
     }
