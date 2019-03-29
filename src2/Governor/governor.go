@@ -77,11 +77,12 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 		}
 		if Config.HasBackup{
 			fmt.Println("has backup")
+			Config.HasBackup = false
 			go func(FSMchan Config.FSMChannels) {
 			time.Sleep(3 * time.Second)
 			FSMchan.PingFromGov <- GState
 			fmt.Println("ping sent to FSM from gov")
-			Config.HasBackup = false
+
 			} (FSMchan)
 		}
 
@@ -200,6 +201,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 					}
 				}
 			}
+			FSMchan.PingFromGov <- GState
 		}
 	}
 }

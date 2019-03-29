@@ -2,35 +2,8 @@
 "Map": {
 "0": {
 "State": 0,
-"Dir": 1,
-"Floor": 3,
-"Queue": [
-[
-false,
-false,
-false
-],
-[
-false,
-false,
-false
-],
-[
-false,
-false,
-false
-],
-[
-false,
-false,
-false
-]
-]
-},
-"1": {
-"State": 0,
 "Dir": 0,
-"Floor": 2,
+"Floor": 0,
 "Queue": [
 [
 false,
