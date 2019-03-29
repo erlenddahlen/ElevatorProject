@@ -20,7 +20,7 @@ func main(){
 
     // var port string
     // flag.StringVar(&port, "port", "", "port of this peer")
-    // flag.Parse()
+    flag.Parse()
 
     //elevio.Init("localhost:" + port, 4)
     elevio.Init("localhost:15657", 4)

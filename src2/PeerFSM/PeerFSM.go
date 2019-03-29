@@ -57,6 +57,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
   for{
 
       chFSM.LocalStateUpdate <- peer
+      fmt.Println("Queue in FSM: ", peer.Queue)
       // fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
       //fmt.Println("QUEUE in FSM: ", peer.Queue)
       //Lights(GState, peer, id)

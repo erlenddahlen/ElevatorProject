@@ -116,7 +116,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 
 
 		case Id:= <- gchan.LostElev:
-			fmt.Println("Gov_2 in")
+			//fmt.Println("Gov_2 in")
 			lostElev:= GState.Map[Id]
 			delete(GState.Map, Id)
 			newOrder := Config.ButtonEvent{}
@@ -135,25 +135,25 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 					}
 				}
 			}
-			fmt.Println("Gov_2 out")
+			//fmt.Println("Gov_2 out")
 		case hallOrder= <- gchan.AddHallOrder:
-			fmt.Println("Gov_3 in")
+			//fmt.Println("Gov_3 in")
 			//fmt.Println("Hall", GState.HallRequests)
-			fmt.Println("Got Hall from Peer")
+			//fmt.Println("Got Hall from Peer")
 				GState.HallRequests[hallOrder.Floor][hallOrder.Button] = true
-							fmt.Println("set distrute to true")
+				//			fmt.Println("set distrute to true")
 				distribute = true
-				fmt.Println("Gov_3 out")
+				//fmt.Println("Gov_3 out")
 		case cabOrderFloor:= <- FSMchan.AddCabOrderGov:
-			fmt.Println("Gov_4 in")
-			fmt.Println("Got Hall from Peer")
+			//fmt.Println("Gov_4 in")
+			//fmt.Println("Got Hall from Peer")
 				var x = GState.Map[GState.Id]
 				x.Queue[cabOrderFloor][2] = true
 				GState.Map[GState.Id] = x
-				fmt.Println("Got Hall from Peer")
+				//fmt.Println("Got Hall from Peer")
 				FSMchan.PingFromGov <- GState
-				fmt.Println("Sent update to Peer")
-				fmt.Println("Gov_4 out")
+				//fmt.Println("Sent update to Peer")
+				//fmt.Println("Gov_4 out")
 		case update:= <- FSMchan.LocalStateUpdate:
 			//fmt.Println("Gov_5 in")
 			tempQueue:= GState.Map[GState.Id].Queue
@@ -211,9 +211,9 @@ func NetworkState(gchan Config.GovernorChannels){
 			if latestState.Id != StateUpdate.Id {
 			//fmt.Println("Receive state: ", StateUpdate)
 			seen[StateUpdate.Id] = time.Now()
-			fmt.Println("Net in")
+			//fmt.Println("Net in")
 			gchan.ExternalState <- StateUpdate
-			fmt.Println("Net out")
+			//fmt.Println("Net out")
 			//fmt.Println("Received external state from ID:", StateUpdate.Id)
 			//fmt.Println(StateUpdate)
 		}
