@@ -18,11 +18,12 @@ func main(){
     var id string
     flag.StringVar(&id, "id", "", "id of this peer")
 
-    var port string
-    flag.StringVar(&port, "port", "", "port of this peer")
-    flag.Parse()
+    // var port string
+    // flag.StringVar(&port, "port", "", "port of this peer")
+    // flag.Parse()
 
-    elevio.Init("localhost:" + port, 4)
+    //elevio.Init("localhost:" + port, 4)
+    elevio.Init("localhost:15657", 4)
     fmt.Println("ID: ", id)
 
     // if id == "" {

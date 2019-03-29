@@ -128,7 +128,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 						keyBestElevator:= ChooseElevator(GState.Map, newOrder, GState)
 						if keyBestElevator == GState.Id {
 							var x = GState.Map[GState.Id]
-							x.Queue[hallOrder.Floor][hallOrder.Button] = true
+							x.Queue[newOrder.Floor][newOrder.Button] = true
 							GState.Map[GState.Id] = x
 							FSMchan.PingFromGov <- GState
 						}
@@ -161,8 +161,6 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			var x = GState.Map[GState.Id]
 			x.Queue = tempQueue
 			GState.Map[GState.Id] = x
-
-
 			//Dersom staten som oppdateringen har(alstå FSM-state) er DOOR_OPEN, fjern hall i denne etasjen
 			if update.State == Config.DOOR_OPEN {
 				for button:= 0;  button < Config.NumButtons - 1 ; button++ {
@@ -177,6 +175,19 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			}
 				PeerFSM.Lights(GState, GState.Map[id], id)
 				//fmt.Println("Gov_5 out")
+
+		case <- gchan.Watchdog:
+			fmt.Println("Watchdog timed out")
+			// En-to heiser henger, vi tildeler alle hallreq til oss selv
+			for floor:= 0; floor < Config.NumFloors; floor++ {
+				for button := 0; button < Config.NumButtons-1; button++  {
+					if GState.HallRequests[floor][button] {
+						var x = GState.Map[GState.Id]
+						x.Queue[floor][button] = true
+						GState.Map[GState.Id] = x
+					}
+				}
+			}
 		}
 	}
 }
