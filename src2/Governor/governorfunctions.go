@@ -27,8 +27,8 @@ func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEven
 	}
 	sort.Ints(keys)
 	//fmt.Println(keys)
-	for k:= keys[0]; k  < len(keys); k++ {
-		keyString:= strconv.Itoa(k)
+	for _,v:= range keys{
+		keyString:= strconv.Itoa(v)
 		times[i] = TimeToServeOrder(elevators[keyString], NewOrder)
 		if times[i] <= times[indexBestElevator]{
 			indexBestElevator = i
