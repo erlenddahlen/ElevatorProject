@@ -47,6 +47,7 @@ func Watchdog(gchan Config.GovernorChannels, GState Config.GlobalState){
 			if changedState || !(hallreqExist){
 					watchdogTimer = time.NewTimer(6 * time.Second)
 			}
+			prevState = newState
 
 		case <- watchdogTimer.C:
 			gchan.Watchdog <- 1

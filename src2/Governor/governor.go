@@ -224,7 +224,9 @@ func NetworkState(gchan Config.GovernorChannels) {
 				seen[StateUpdate.Id] = time.Now()
 				//fmt.Println("Net in")
 				gchan.ExternalState <- StateUpdate
+				fmt.Println("hei")
 				gchan.UpdatefromSpam <- StateUpdate
+				fmt.Println("hallaaa")
 				//fmt.Println("Net out")
 				//fmt.Println("Received external state from ID:", StateUpdate.Id)
 				//fmt.Println(StateUpdate)

@@ -60,6 +60,7 @@ func main() {
 	go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, id, GState)
 	go Governor.SpamGlobalState(GovernorChannels)
 	go Governor.NetworkState(GovernorChannels)
+	go Governor.Watchdog(GovernorChannels, GState)
 	go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, id, GState)
 
 	for {
