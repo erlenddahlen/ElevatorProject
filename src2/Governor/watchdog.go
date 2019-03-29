@@ -1,36 +1,56 @@
-
+package Governor
+import (
+	"../Config"
+	 "fmt"
+	 "time"
+)
 
 //Watchdog should be own go routine
 //In SpamGlobalState, send latestState to Watchdog on own channel
 //Watchdog should be a case in for/select in UpdateGlobalState
 //When activated, put all Hallreq in own queue
 
+func Watchdog(gchan Config.GovernorChannels, GState Config.GlobalState){
+	watchdogTimer := time.NewTimer(6 * time.Second)
+	var changedState bool
+	var hallreqExist bool
+	var prevState Config.GlobalState
+	prevState = GState
 
-func Watchdog(gchan Config.GovernorChannels){
-	latestState
-	ticker := time.Tick(6 * time.Second)
-	var change bool
-	var hallreqs bool
 
 	for{
 		select{
-			case newUpdate := <- gchan.UpdatefromSpam
-			change = false
-			hallreqs = false
+			case newState := <- gchan.UpdatefromSpam
+			changedState = false
+			hallreqExist = false
 
-			//Iterate through Hallreqs
-				//If exists orders hallreq = true
-
-			//Iterate throug and check if chang in elev flor and state between latestState and newUpdate
-				//If exists change = true
-
-			if change OR !(hallreqs){
-				reset ticker
+			// Iterate through Hallreqs, if exists orders hallreq = true
+			for floor:= 0; floor < Config.NumFloors; floor++ {
+				for button := 0; button < Config.NumButtons-1; button++ {
+					if newState.Hallreq[floor][button] {
+						hallreqExist = true
+						break
+					}
+				}
 			}
-			case <- ticker.C
+
+			// Iterate throug and check if change in elev floor and state between latestState
+			// and newState, if exists change = true
+
+			for key, _:= range newState.Map{
+				if newState.Map[key].State != prevState.Map[key].State ||  newState.Map[key].State != prevState.Map[key].State{
+					changedState = true
+					break
+				}
+			}
+
+			if changedState || !(hallreqExist){
+					watchdogTimer = time.NewTimer(6 * time.Second)
+			}
+			// This could be directly set in governor. The governor takes in the timer
+			case <- watchdogTimer.C
 			gchan.pingfromwatch <- 1
+
 		}
-
 	}
-
 }
