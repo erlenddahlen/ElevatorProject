@@ -55,6 +55,8 @@ func main() {
 		ExternalState: make(chan Config.GlobalState),
 		LostElev:      make(chan string),
 		AddHallOrder:  make(chan Config.ButtonEvent),
+		UpdatefromSpam: make(chan Config.GlobalState),
+		Watchdog:		make(chan int),
 	}
 
 	go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, id, GState)

@@ -82,5 +82,4 @@ type GovernorChannels struct { //decalred in config file
 	AddHallOrder   chan ButtonEvent
 	UpdatefromSpam chan GlobalState
 	Watchdog       chan int
-	TakeBackup     chan GlobalState
 }
