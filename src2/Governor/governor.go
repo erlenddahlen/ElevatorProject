@@ -21,7 +21,7 @@ var StateUpdate Config.GlobalState
 
 func SpamGlobalState(gchan Config.GovernorChannels) { //Update and broadcast latest globalState from one peer
 	//This is the global state
-	ticker := time.Tick(500 * time.Millisecond)
+	ticker := time.Tick(1000 * time.Millisecond)
 	transmitNet := make(chan Config.GlobalState)
 	go bcast.Transmitter(16700, transmitNet)
 
@@ -41,7 +41,11 @@ func SpamGlobalState(gchan Config.GovernorChannels) { //Update and broadcast lat
 
 		case newUpdate := <-gchan.InternalState:
 			latestState = newUpdate
-			gchan.TakeBackup <- latestState
+			var file, err1 = os.Create(Config.Backupfilename)
+			isError(err1)
+			GStatejason, _ := json.MarshalIndent(latestState, "", "")
+			_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
+			file.Close()
 			//fmt.Println("latestState:", latestState)
 		}
 	}
@@ -75,7 +79,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 		// case <- ticker.C:
 		// 		FSMchan.PingFromGov <- GState
 		case Update := <-gchan.ExternalState: //StateUpdate from other Peer
-			//fmt.Println("external state: ", Update.Id)
+			//fmt.Println("external state: ", Update.Id)default:
 			OutsideElev := Update.Map[Update.Id]
 
 			// 1. Set our info about the OutsideElev to the update from OutsideElev
@@ -208,16 +212,6 @@ func isError(err error) bool {
 
 	return (err != nil)
 }
-func BackupState(gchan Config.GovernorChannels) {
-	for {
-		GState := <-gchan.TakeBackup
-		var file, err1 = os.Create(Config.Backupfilename)
-		isError(err1)
-		GStatejason, _ := json.MarshalIndent(GState, "", "")
-		_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
-		file.Close()
-	}
-}
 
 func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 	var _, err1 = os.Stat(Config.Backupfilename)
@@ -249,7 +243,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 		if error != nil {
 			fmt.Println("error:", error)
 		}
-		GState.Id = id //Do not overwrite Id
+		fmt.Printf("State: %s", GStateByte)
 		return GState
 	}
 }

@@ -26,7 +26,7 @@ func main() {
 	elevio.Init("localhost:"+port, 4)
 	fmt.Println("ID: ", id)
 
-	Config.Backupfilename = id + ".txt"
+	Config.Backupfilename = "backup" + id + ".txt"
 
 	// if id == "" {
 	//     localIP, err := localip.LocalIP()
@@ -59,7 +59,6 @@ func main() {
 	go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, id, GState)
 	go Governor.SpamGlobalState(GovernorChannels)
 	go Governor.NetworkState(GovernorChannels)
-	go Governor.BackupState(GovernorChannels)
 	go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, id, GState)
 
 	for {
