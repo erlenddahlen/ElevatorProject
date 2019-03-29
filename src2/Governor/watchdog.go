@@ -38,7 +38,7 @@ func Watchdog(gchan Config.GovernorChannels, GState Config.GlobalState){
 			// and newState, if exists change = true
 
 			for key, _:= range newState.Map{
-				if newState.Map[key].State != prevState.Map[key].State ||  newState.Map[key].State != prevState.Map[key].State{
+				if newState.Map[key].State != prevState.Map[key].State ||  newState.Map[key].Floor != prevState.Map[key].Floor{
 					changedState = true
 					break
 				}

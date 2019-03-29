@@ -1,0 +1,77 @@
+{
+"Map": {
+"0": {
+"State": 0,
+"Dir": 0,
+"Floor": 0,
+"Queue": [
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+]
+]
+},
+"1": {
+"State": 0,
+"Dir": 0,
+"Floor": 3,
+"Queue": [
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+],
+[
+false,
+false,
+false
+]
+]
+}
+},
+"HallRequests": [
+[
+false,
+false
+],
+[
+false,
+false
+],
+[
+false,
+false
+],
+[
+false,
+false
+]
+],
+"Id": "0"
+}
