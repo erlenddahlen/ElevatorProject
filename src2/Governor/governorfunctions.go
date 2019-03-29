@@ -12,8 +12,6 @@ func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEven
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
 	keyBestElevator := GState.Id
-	//lowestkey := len(elevators)
-	fmt.Println("inside choose")
 
 	//trying to convert to map
 	i := 0
@@ -35,7 +33,6 @@ func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEven
 			keyBestElevator = keyString
 			}
 		i++
-			fmt.Println("through choose, key: ", keyBestElevator)
 	}
 
 
@@ -55,6 +52,7 @@ func ChooseElevator(elevators map[string]Config.Elev, NewOrder Config.ButtonEven
 	// }
 
 	//return elevators[keyBestElevator]
+	fmt.Println("Choose finished, key: ", keyBestElevator)
     return keyBestElevator
 }
 

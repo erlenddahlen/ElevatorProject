@@ -18,7 +18,7 @@ func SpamGlobalState(gchan Config.GovernorChannels){ //Update and broadcast late
 	//This is the global state
 	ticker := time.Tick(1000 * time.Millisecond)
 	transmitNet := make(chan Config.GlobalState)
-	i:= 0
+	//i:= 0
 	go bcast.Transmitter(16700, transmitNet)
 
 	// transmitTest := make(chan map[string]Config.Elev)
@@ -31,8 +31,8 @@ func SpamGlobalState(gchan Config.GovernorChannels){ //Update and broadcast late
 				//fmt.Println(t)
 				//fmt.Println("Transmit latestState", latestState)
 				transmitNet <- latestState //sending latest state to network
-				fmt.Println("Transmit ", i)
-				i = i+1
+				// fmt.Println("Transmit ", i)
+				// i = i+1
 				//fmt.Println("Transmitting GlobalState from ID: ", latestState.Id)
 
 				// fmt.Println("Transmit Map", latestState.Map)
@@ -59,7 +59,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 		gchan.InternalState <- GState
 		//fmt.Println("distribute: ", distribute)
 		if distribute{
-			fmt.Println("inside distribute")
+			//fmt.Println("inside distribute")
 			//distribuere
 			keyBestElevator:= ChooseElevator(GState.Map, hallOrder, GState)
 			fmt.Println("Distributing to: ", keyBestElevator)
@@ -68,7 +68,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				x.Queue[hallOrder.Floor][hallOrder.Button] = true
 				GState.Map[GState.Id] = x
 				FSMchan.PingFromGov <- GState
-				fmt.Println("Q.i:", GState.Map[GState.Id].Queue)
+				//fmt.Println("Q.i:", GState.Map[GState.Id].Queue)
 			}
 			distribute = false
 		}
@@ -99,6 +99,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 					if Update.HallRequests[floor][button] && !GState.HallRequests[floor][button]{
 						GState.HallRequests[floor][button] = true
 						newOrder = Config.ButtonEvent{floor, Config.ButtonType(button)}
+						fmt.Println("Order from other: ", newOrder)
 						keyBestElevator:= ChooseElevator(GState.Map, newOrder, GState)
 						fmt.Println("Distributing to: ", keyBestElevator)
 						if keyBestElevator == GState.Id {
@@ -106,7 +107,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 							x.Queue[newOrder.Floor][newOrder.Button] = true
 							GState.Map[GState.Id] = x
 							FSMchan.PingFromGov <- GState
-							fmt.Println("Q.e:", GState.Map[GState.Id].Queue)
+							//fmt.Println("Q.e:", GState.Map[GState.Id].Queue)
 						}
 					}
 				}
@@ -171,7 +172,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				x.Queue[update.Floor][1] = false
 				x.Queue[update.Floor][2] = false
 				GState.Map[GState.Id] = x
-				fmt.Println("Q.D:", GState.Map[GState.Id].Queue)
+				//fmt.Println("Q.D:", GState.Map[GState.Id].Queue)
 			}
 				PeerFSM.Lights(GState, GState.Map[id], id)
 				//fmt.Println("Gov_5 out")
@@ -226,7 +227,7 @@ func NetworkState(gchan Config.GovernorChannels){
 				if (t > timeOut){
 					gchan.LostElev <- k
 					delete(seen, k)
-					fmt.Println("delete")
+					fmt.Println("deleted: ", k)
 				}
 			}
 		}
