@@ -54,6 +54,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
 	doorTimerDone := time.NewTimer(0)
 	doorTimerDone.Stop()
 	go handleIo(chGov, chFSM)
+
 	elevio.SetMotorDirection(GState.Map[id].Dir)
 	peer := GState.Map[id]
 
@@ -121,6 +122,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
 				//fmt.Println("case UNKNOWN")
 				elevio.SetMotorDirection(elevio.MD_Stop)
 				peer.State = Config.IDLE
+        
 				//fmt.Println("State i unknown: ", peer.State)
 			case Config.MOVING:
 				if ShouldStop(peer) {

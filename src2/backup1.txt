@@ -1,9 +1,9 @@
 {
 "Map": {
 "1": {
-"State": 1,
-"Dir": -1,
-"Floor": 0,
+"State": 0,
+"Dir": 0,
+"Floor": 3,
 "Queue": [
 [
 false,

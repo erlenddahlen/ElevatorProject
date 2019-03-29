@@ -76,7 +76,13 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			distribute = false
 		}
 		if Config.HasBackup{
+			fmt.Println("has backup")
+			go func(FSMchan Config.FSMChannels) {
+			time.Sleep(3 * time.Second)
 			FSMchan.PingFromGov <- GState
+			fmt.Println("ping sent to FSM from gov")
+			Config.HasBackup = false
+			} (FSMchan)
 		}
 
 		select {
@@ -251,7 +257,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 	var _, err1 = os.Stat(Config.Backupfilename)
 	// If there is no backup, create one
 	if os.IsNotExist(err1) {
-		Config.HasBackup = true
+
 
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
 		ElevState := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
@@ -267,6 +273,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 		_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
 		return GState
 	} else {
+		Config.HasBackup = true
 		//Read backup file
 		GStateByte, err := ioutil.ReadFile(Config.Backupfilename) // just pass the file name
 		if err != nil {
