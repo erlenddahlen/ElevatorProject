@@ -75,6 +75,9 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			}
 			distribute = false
 		}
+		if Config.HasBackup{
+			FSMchan.PingFromGov <- GState
+		}
 
 		select {
 		// case <- ticker.C:
@@ -176,6 +179,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				//fmt.Println("Q.D:", GState.Map[GState.Id].Queue)
 			}
 			PeerFSM.Lights(GState, GState.Map[id], id)
+			//FSMchan.PingFromGov <- GState
 			//fmt.Println("Gov_5 out")
 
 		case <-gchan.Watchdog:
@@ -243,9 +247,11 @@ func isError(err error) bool {
 }
 
 func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
+	Config.HasBackup = false
 	var _, err1 = os.Stat(Config.Backupfilename)
 	// If there is no backup, create one
 	if os.IsNotExist(err1) {
+		Config.HasBackup = true
 
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
 		ElevState := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
@@ -272,6 +278,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 		if error != nil {
 			fmt.Println("error:", error)
 		}
+		GState.Map[GState.Id] = Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, GState.Map[GState.Id].Queue}
 		fmt.Printf("State: %s", GStateByte)
 		return GState
 	}

@@ -13,6 +13,7 @@ const (
 
 // Name of backupfile
 var Backupfilename string
+var HasBackup bool
 
 type ElevState int
 
