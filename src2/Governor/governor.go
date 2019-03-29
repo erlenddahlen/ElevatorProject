@@ -3,7 +3,6 @@ package Governor
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 
@@ -42,6 +41,7 @@ func SpamGlobalState(gchan Config.GovernorChannels) { //Update and broadcast lat
 
 		case newUpdate := <-gchan.InternalState:
 			latestState = newUpdate
+			gchan.TakeBackup <- latestState
 			//fmt.Println("latestState:", latestState)
 		}
 	}
@@ -208,57 +208,48 @@ func isError(err error) bool {
 
 	return (err != nil)
 }
+func BackupState(gchan Config.GovernorChannels) {
+	for {
+		GState := <-gchan.TakeBackup
+		var file, err1 = os.Create(Config.Backupfilename)
+		isError(err1)
+		GStatejason, _ := json.MarshalIndent(GState, "", "")
+		_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
+		file.Close()
+	}
+}
 
 func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
-
-	//Check for existing backup filename
-	//if file exists
-	//Load data from it
-	//Else creat empty data files
-	filename := "backupfile.txt"
-	var _, err1 = os.Stat(filename)
+	var _, err1 = os.Stat(Config.Backupfilename)
+	// If there is no backup, create one
 	if os.IsNotExist(err1) {
-		var file, err1 = os.Create(filename)
-		isError(err1)
-		defer file.Close()
+
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
 		ElevState := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
 		GState.Map = make(map[string]Config.Elev)
 		GState.HallRequests = [4][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
 		GState.Id = id
 		GState.Map[GState.Id] = ElevState
-		// Write Log to file in json-format
-		GStatejason, _ := json.MarshalIndent(GState, "", " ")
-		_ = ioutil.WriteFile(filename, GStatejason, 0644)
+
+		var file, err1 = os.Create(Config.Backupfilename)
+		isError(err1)
+		defer file.Close()
+		GStatejason, _ := json.MarshalIndent(GState, "", "")
+		_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
 		return GState
 	} else {
-		var readFile, err2 = os.OpenFile(filename, os.O_RDWR, 0644)
-		isError(err2)
-		defer readFile.Close()
-
-		var GStatetext = make([]byte, 1024)
-
-		for {
-			_, err3 := readFile.Read(GStatetext)
-
-			// Break if finally arrived at end of file
-			if err3 == io.EOF {
-				break
-			}
-
-			// Break if error occured
-			if err3 != nil && err3 != io.EOF {
-				isError(err3)
-				break
-			}
+		//Read backup file
+		GStateByte, err := ioutil.ReadFile(Config.Backupfilename) // just pass the file name
+		if err != nil {
+			fmt.Print(err)
 		}
+
 		// Undo json
-		var GStateByte = []byte(GStatetext)
-		//fmt.Println(new)
 		error := json.Unmarshal(GStateByte, &GState)
 		if error != nil {
 			fmt.Println("error:", error)
 		}
+		GState.Id = id //Do not overwrite Id
 		return GState
 	}
 }
