@@ -16,8 +16,9 @@ var StateUpdate Config.GlobalState
 
 func SpamGlobalState(gchan Config.GovernorChannels){ //Update and broadcast latest globalState from one peer
 	//This is the global state
-	ticker := time.Tick(500 * time.Millisecond)
+	ticker := time.Tick(1000 * time.Millisecond)
 	transmitNet := make(chan Config.GlobalState)
+	i:= 0
 	go bcast.Transmitter(16700, transmitNet)
 
 	// transmitTest := make(chan map[string]Config.Elev)
@@ -26,17 +27,22 @@ func SpamGlobalState(gchan Config.GovernorChannels){ //Update and broadcast late
 	for{
 		select{
 			case <- ticker: // ticker
+
 				//fmt.Println(t)
 				//fmt.Println("Transmit latestState", latestState)
 				transmitNet <- latestState //sending latest state to network
+				fmt.Println("Transmit ", i)
+				i = i+1
 				//fmt.Println("Transmitting GlobalState from ID: ", latestState.Id)
 
 				// fmt.Println("Transmit Map", latestState.Map)
 				// transmitTest <- latestState.Map
 
 			case newUpdate:= <- gchan.InternalState:
+
 				latestState = newUpdate
 				//fmt.Println("latestState:", latestState)
+
 		}
 	}
 }
@@ -51,7 +57,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 	for{
 		//Watchdog <- globalState, after 6 sec without activity in network, peer takes ownership of all global orders
 		gchan.InternalState <- GState
-		fmt.Println("distribute: ", distribute)
+		//fmt.Println("distribute: ", distribute)
 		if distribute{
 			fmt.Println("inside distribute")
 			//distribuere
@@ -71,6 +77,8 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			// case <- ticker.C:
 			// 		FSMchan.PingFromGov <- GState
 			case Update:=  <- gchan.ExternalState: //StateUpdate from other Peer
+			//fmt.Println("Gov_1 in")
+
 			//fmt.Println("external state: ", Update.Id)
 			OutsideElev:= Update.Map[Update.Id]
 
@@ -104,10 +112,11 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				}
 			}
 			PeerFSM.Lights(GState, GState.Map[id], id)
-
+			//fmt.Println("Gov_1 out")
 
 
 		case Id:= <- gchan.LostElev:
+			fmt.Println("Gov_2 in")
 			lostElev:= GState.Map[Id]
 			delete(GState.Map, Id)
 			newOrder := Config.ButtonEvent{}
@@ -126,14 +135,17 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 					}
 				}
 			}
-
+			fmt.Println("Gov_2 out")
 		case hallOrder= <- gchan.AddHallOrder:
+			fmt.Println("Gov_3 in")
 			//fmt.Println("Hall", GState.HallRequests)
 			fmt.Println("Got Hall from Peer")
 				GState.HallRequests[hallOrder.Floor][hallOrder.Button] = true
 							fmt.Println("set distrute to true")
 				distribute = true
+				fmt.Println("Gov_3 out")
 		case cabOrderFloor:= <- FSMchan.AddCabOrderGov:
+			fmt.Println("Gov_4 in")
 			fmt.Println("Got Hall from Peer")
 				var x = GState.Map[GState.Id]
 				x.Queue[cabOrderFloor][2] = true
@@ -141,7 +153,9 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				fmt.Println("Got Hall from Peer")
 				FSMchan.PingFromGov <- GState
 				fmt.Println("Sent update to Peer")
+				fmt.Println("Gov_4 out")
 		case update:= <- FSMchan.LocalStateUpdate:
+			//fmt.Println("Gov_5 in")
 			tempQueue:= GState.Map[GState.Id].Queue
 			GState.Map[GState.Id] = update
 			var x = GState.Map[GState.Id]
@@ -162,6 +176,7 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 				fmt.Println("Q.D:", GState.Map[GState.Id].Queue)
 			}
 				PeerFSM.Lights(GState, GState.Map[id], id)
+				//fmt.Println("Gov_5 out")
 		}
 	}
 }
@@ -180,14 +195,18 @@ func NetworkState(gchan Config.GovernorChannels){
 	for{
 		select{
 		case StateUpdate= <- receiveNet:
+			//fmt.Println("GovNet_1 in")
 
 			if latestState.Id != StateUpdate.Id {
 			//fmt.Println("Receive state: ", StateUpdate)
 			seen[StateUpdate.Id] = time.Now()
+			fmt.Println("Net in")
 			gchan.ExternalState <- StateUpdate
+			fmt.Println("Net out")
 			//fmt.Println("Received external state from ID:", StateUpdate.Id)
 			//fmt.Println(StateUpdate)
 		}
+		//fmt.Println("GovNet_1 out")
 		// case Update:= <- receiveTest:
 		// 	fmt.Println("recTest: ", Update)
 		default:
@@ -196,6 +215,7 @@ func NetworkState(gchan Config.GovernorChannels){
 				if (t > timeOut){
 					gchan.LostElev <- k
 					delete(seen, k)
+					fmt.Println("delete")
 				}
 			}
 		}
@@ -212,3 +232,40 @@ func GovernorInit(GState Config.GlobalState, id string)Config.GlobalState  {
 	GState.Map[GState.Id] = ElevState
 	return GState
 }
+
+
+
+// //Watchdog should be own go routine
+// //In SpamGlobalState, send latestState to Watchdog on own channel
+// //Watchdog should be a case in for/select in UpdateGlobalState
+// //When activated, put all Hallreq in own queue
+//
+//
+// func Watchdog(gchan Config.GovernorChannels){
+// 	latestState
+// 	ticker := time.Tick(6 * time.Second)
+// 	var change bool
+// 	var hallreqs bool
+//
+// 	for{
+// 		select{
+// 			case newUpdate := <- gchan.UpdatefromSpam
+// 			change = false
+// 			hallreqs = false
+//
+// 			//Iterate through Hallreqs
+// 				//If exists orders hallreq = true
+//
+// 			//Iterate throug and check if chang in elev flor and state between latestState and newUpdate
+// 				//If exists change = true
+//
+// 			if change OR !(hallreqs){
+// 				reset ticker
+// 			}
+// 			case <- ticker.C
+// 			gchan.pingfromwatch <- 1
+// 		}
+//
+// 	}
+//
+// }

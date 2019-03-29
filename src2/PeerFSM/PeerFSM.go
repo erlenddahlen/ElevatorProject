@@ -66,6 +66,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
     //
 
     case update:= <-chFSM.PingFromGov:
+        fmt.Println("Peer_1 in")
         peer.Queue = update.Map[id].Queue
         fmt.Println("Q.p: ", peer.Queue)
         //Lights(update, peer, id)
@@ -110,8 +111,9 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
       }
 
 
-
+      fmt.Println("Peer_1 out")
   case currentFloor:= <-chFSM.CurrentFloor:
+      fmt.Println("Peer_2 in")
       //fmt.Println("CASE B")
       peer.Floor = currentFloor
       elevio.SetFloorIndicator(currentFloor)
@@ -141,8 +143,9 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
       //} else if floor == 4 {
         //elevio.SetMotorDirection(elevio.MD_Down)
       //}
-
+fmt.Println("Peer_2 out")
     case <-doorTimerDone.C:
+        fmt.Println("Peer_3 in")
     //fmt.Println("CASE C")
       elevio.SetDoorOpenLamp(false)
       peer.Dir = GetNextDir(peer)
@@ -153,6 +156,7 @@ func FSM(chGov Config.GovernorChannels, chFSM Config.FSMChannels, id string, GSt
       } else {
         peer.State = Config.IDLE
       }
+      fmt.Println("Peer_3 out")
       //c.LocalStateUpdate <- peer
     }
   }
