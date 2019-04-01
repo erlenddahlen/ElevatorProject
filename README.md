@@ -1,5 +1,5 @@
-Elevator Project
-================
+TTK4145 - Elevator Project
+================================
 
 The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer. The chosen peer is then responsible for this order.
 
