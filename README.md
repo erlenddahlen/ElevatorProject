@@ -60,3 +60,10 @@ Error handling functionality
 - spamming
 - watchdog
 - backlog
+
+
+Error handling | Description
+------------ | -------------
+Packet loss| For this system it is extremely important that all the peers on the network always has the same data. This is important for guaranteeing that they all get the same result of which elevator that should serve a specific order. To be able to guarantee correct and similar information the system will spam the network with the newest information at all times. Even though we may have packet loss, the probability for this gets small when the data is sent frequently.
+Motor stop or lost peer| To prevent that orders get lost the system has functionality to monitor weather an elevator has motor stop or if an elevator is disconnected from the system. A watchdog checks updates from all elevators to decide if a motor error occurs. This is done by finding out if an elevator has an order in its queue but don't changes state or floor within 6 sec. If a motor error occurs at another elevator, the elevator that discovered the error takes all the hall orders. The network module sends frequently an updated list of peers in the network, if a peer disconnects all its hall orders are redistributed.
+Elevator shut down| If an elevator shuts down the orders in its queue will disappear. To prevent these orders from not being executed a backup log file is frequently updated with the latest hall orders given to the elevator. When an elevator turns on again it starts executing the orders in this file. 
