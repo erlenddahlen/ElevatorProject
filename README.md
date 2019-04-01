@@ -8,7 +8,8 @@ In addition, the system also have functionality to handle error. This includes s
 This code is specifically made for three elevators and four floors.
 
 ![System architecture](ElevatorSystem.png)
-*)Figure: Overview of modules and packages between two nodes(*
+
+*Figure: Overview of modules and packages between two nodes*
 
 Module descriptions
 ---------------------
