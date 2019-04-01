@@ -8,7 +8,7 @@ In addition, the system also have functionality to handle error. This includes s
 This code is specifically made for three elevators and four floors.
 
 ![System architecture](ElevatorSystem.png)
-Format: ![Alt Text](url)
+
 
 Module descriptions
 ---------------------
