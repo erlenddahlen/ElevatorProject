@@ -1,7 +1,9 @@
 Elevator Project
 ================
 
-The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer.
+The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer. The chosen peer is then responsible for this order.
+
+In addition, the system also have functionality to handle error. This includes spamming the network to achieve correctness of information, backup files and a watchdog for monitor elevator motor stop.
 
 This code is specifically made for three elevators and four floors.
 
@@ -38,13 +40,20 @@ The FSM module also have a GO routine for checking if buttons are pushed and if 
 
 ###  Manager
 
-The Manager module
+The Manager module is responsible for distribution of correct and newest data between other peers and its own FSM module. This data is called the GState (GlobalState) which consists of all the states of all the elevators in the network, an id and the common hall orders(#2). It cooperates with the Network module for transmitting and receiving the newest GState every time a change in any of the peers happens(#3). And to check which peers that are on the network.
 
-ansvar for å alltd ha ny informasjon og sende dette ut, og sende denne infoen videre til FSM
+It is also responsible to decide which peer that is responsible for an order, and if it results in its own elevator it has to send this information to its FSM.
+
+Since it has all the information about everything in the system it also has the responsibility of monitor which elevators that are cooperative. It does this by checking if a peer disappears from the network or if it has a motor stop(#4).
+
+
+(#2) Happens in the UpdateGlobalState function
+(#3) Happens in the SpamGlobalState function
+(#4) Happens in the functions UpdateNetworkPeers and MotorstopWatchdog
 
 ###  Network
 
-
+###  Extra packages
 
 Error handling functionality
 ---------------------------
