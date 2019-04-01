@@ -25,7 +25,7 @@ func main() {
 
 	var GState DataStructures.GlobalState
 	//Init state, use backup if backup file available
-	GState = Manager.ManagerInit(GState, id)
+	GState = Manager.managerInit(GState, id)
 
 	FSMChannels := DataStructures.FSMChannels{
 		AtFloor:            make(chan int),
@@ -37,18 +37,18 @@ func main() {
 	}
 
 	ManagerChannels := DataStructures.ManagerChannels{
-		InternalState:  make(chan DataStructures.GlobalState),
-		ExternalState:  make(chan DataStructures.GlobalState),
-		LostElev:       make(chan string),
-		AddHallOrder:   make(chan DataStructures.ButtonEvent),
-		UpdatefromSpam: make(chan DataStructures.GlobalState),
-		Watchdog:       make(chan int),
+		InternalState:     make(chan DataStructures.GlobalState),
+		ExternalState:     make(chan DataStructures.GlobalState),
+		LostElev:          make(chan string),
+		AddHallOrder:      make(chan DataStructures.ButtonEvent),
+		UpdatefromSpam:    make(chan DataStructures.GlobalState),
+		MotorstopWatchdog: make(chan int),
 	}
 
 	go Manager.UpdateGlobalState(ManagerChannels, FSMChannels, id, GState)
 	go Manager.SpamGlobalState(ManagerChannels)
-	go Manager.NetworkState(ManagerChannels)
-	go Manager.Watchdog(ManagerChannels, GState)
+	go Manager.UpdateNetworkPeers(ManagerChannels)
+	go Manager.MotorstopWatchdog(ManagerChannels, GState)
 	go FSM.FSM(ManagerChannels, FSMChannels, id, GState)
 
 	for {

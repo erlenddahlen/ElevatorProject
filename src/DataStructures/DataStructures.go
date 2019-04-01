@@ -8,6 +8,8 @@ const (
 	TravelTime   = 5
 	DoorOpenTime = 3
 	NumOfElev    = 3
+	SpamTime     = 1000 //ms
+	PortNumber   = 16700
 )
 
 // Name of backupfile
@@ -67,10 +69,10 @@ type FSMChannels struct {
 }
 
 type ManagerChannels struct { //decalred in config file
-	InternalState  chan GlobalState
-	ExternalState  chan GlobalState
-	LostElev       chan string
-	AddHallOrder   chan ButtonEvent
-	UpdatefromSpam chan GlobalState
-	Watchdog       chan int
+	InternalState     chan GlobalState
+	ExternalState     chan GlobalState
+	LostElev          chan string
+	AddHallOrder      chan ButtonEvent
+	UpdatefromSpam    chan GlobalState
+	MotorstopWatchdog chan int
 }

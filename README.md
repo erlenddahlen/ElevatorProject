@@ -23,16 +23,16 @@ No orders are lost
    - The elevator software should not require reinitialization (manual restart) after intermittent network or motor power loss
 
 Multiple elevators should be more efficient than one
- - The orders should be distributed across the elevators in a reasonable way
+ - The orders should be newOrdersd across the elevators in a reasonable way
    - Ex: If all three elevators are idle and two of them are at the bottom floor, then a new order at the top floor should be handled by the closest elevator (ie. neither of the two at the bottom).
  - You are free to choose and design your own "cost function" of some sort: Minimal movement, minimal waiting time, etc.
  - The project is not about creating the "best" or "optimal" distribution of orders. It only has to be clear that the elevators are cooperating and communicating.
- 
+
 An individual elevator should behave sensibly and efficiently
  - No stopping at every floor "just to be safe"
  - The hall "call upward" and "call downward" buttons should behave differently
    - Ex: If the elevator is moving from floor 1 up to floor 4 and there is a downward order at floor 3, then the elevator should not stop on its way upward, but should return back to floor 3 on its way down
- 
+
 The lights and buttons should function as expected
  - The hall call buttons on all workspaces should let you summon an elevator
  - The lights on the hall buttons should show the same thing on all workspaces
@@ -44,7 +44,7 @@ The lights and buttons should function as expected
  - The "door open" lamp should be used as a substitute for an actual door, and as such should not be switched on while the elevator is moving
    - The duration for keeping the door open should be in the 1-5 second range
 
- 
+
 Start with `1 <= n <= 3` elevators, and `m == 4` floors. Try to avoid hard-coding these values: You should be able to add a fourth elevator with no extra configuration, or change the number of floors with minimal configuration. You do, however, not need to test for `n > 3` and `m != 4`.
 
 
@@ -54,17 +54,17 @@ Some things are left intentionally unspecified. Their implementation will not be
 
 Which orders are cleared when stopping at a floor
  - You can clear only the orders in the direction of travel, or assume that everyone enters/exits the elevator when the door opens
- 
+
 How the elevator behaves when it cannot connect to the network (router) during initialization
  - You can either enter a "single-elevator" mode, or refuse to start
- 
+
 How the hall (call up, call down) buttons work when the elevator is disconnected from the network
  - You can optionally refuse to take these new orders
- 
+
 Stop button & obstruction switch are disabled
    - Their functionality (if/when implemented) is up to you.
 
-   
+
 Permitted assumptions
 ---------------------
 
@@ -73,7 +73,7 @@ The following assumptions will always be true during testing:
  - No multiple simultaneous errors: Only one error happens at a time, but the system must still return to a fail-safe state after this error
    - (Recall that network packet loss is *not* an error in this context, and must be considered regardless of any other (single) error that can occur)
  - No network partitioning: There will never be a situation where there are multiple sets of two or more elevators with no connection between them
-   
+
 Additional resources
 --------------------
 

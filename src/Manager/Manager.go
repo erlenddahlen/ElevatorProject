@@ -15,19 +15,21 @@ var latestState DataStructures.GlobalState
 var StateUpdate DataStructures.GlobalState
 
 func SpamGlobalState(chMan DataStructures.ManagerChannels) {
-	ticker := time.Tick(1000 * time.Millisecond)
+
+	spamTicker := time.Tick(DataStructures.SpamTime * time.Millisecond)
+
 	transmitNet := make(chan DataStructures.GlobalState)
-	go bcast.Transmitter(16700, transmitNet)
+	go bcast.Transmitter(DataStructures.PortNumber, transmitNet)
 
 	for {
 		select {
-		case <-ticker:
+		case <-spamTicker:
 			transmitNet <- latestState
 
 		case newUpdate := <-chMan.InternalState:
 			latestState = newUpdate
 
-			//Write to log
+			//Write global state to log
 			var file, err1 = os.Create(DataStructures.Backupfilename)
 			isError(err1)
 			GStatejason, _ := json.MarshalIndent(latestState, "", "")
@@ -38,13 +40,14 @@ func SpamGlobalState(chMan DataStructures.ManagerChannels) {
 }
 
 func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
-	distribute := false
-	var hallOrder DataStructures.ButtonEvent
+	newOrders := false
 
+	var hallOrder DataStructures.ButtonEvent
 	for {
 		chMan.InternalState <- GState
 
-		if distribute {
+		//Ckeck if this elevator should take a new order
+		if newOrders {
 			keyBestElevator := chooseElevator(GState.Map, hallOrder, GState)
 			if keyBestElevator == GState.Id {
 				var x = GState.Map[GState.Id]
@@ -52,9 +55,10 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 				GState.Map[GState.Id] = x
 				FSMchan.UpdateFromManager <- GState
 			}
-			distribute = false
+			newOrders = false
 		}
 
+		//After initialization with backup, make sure FSM take the old orders
 		if DataStructures.HasBackup {
 			DataStructures.HasBackup = false
 			go func(FSMchan DataStructures.FSMChannels) {
@@ -65,15 +69,17 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 
 		select {
 		case Update := <-chMan.ExternalState:
-			OutsideElev := Update.Map[Update.Id]
-			GState.Map[Update.Id] = OutsideElev
+			otherElev := Update.Map[Update.Id]
+			GState.Map[Update.Id] = otherElev
 
-			if OutsideElev.State == DataStructures.DoorOpen {
+			// Turn off floor light where the other elevator is
+			if otherElev.State == DataStructures.DoorOpen {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
-					GState.HallRequests[OutsideElev.Floor][button] = false
+					GState.HallRequests[otherElev.Floor][button] = false
 				}
 			}
 
+			// Check for new hall orders and distribute responsibility
 			newOrder := DataStructures.ButtonEvent{}
 			for floor := 0; floor < DataStructures.NumFloors; floor++ {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
@@ -90,13 +96,14 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 					}
 				}
 			}
-			Lights(GState, GState.Map[id], id)
+			setHallAndCabLights(GState, GState.Map[id], id)
 
 		case Id := <-chMan.LostElev:
 			lostElev := GState.Map[Id]
 			delete(GState.Map, Id)
 			newOrder := DataStructures.ButtonEvent{}
 
+			// Redistribute for lost elevator's orders
 			for floor := 0; floor < DataStructures.NumFloors; floor++ {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if lostElev.Queue[floor][button] {
@@ -114,7 +121,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 
 		case hallOrder = <-chMan.AddHallOrder:
 			GState.HallRequests[hallOrder.Floor][hallOrder.Button] = true
-			distribute = true
+			newOrders = true
 
 		case cabOrderFloor := <-FSMchan.AddCabOrderManager:
 			var x = GState.Map[GState.Id]
@@ -129,6 +136,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 			x.Queue = tempQueue
 			GState.Map[GState.Id] = x
 
+			// Turn off floor light where this elevator is
 			if update.State == DataStructures.DoorOpen {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					GState.HallRequests[update.Floor][button] = false
@@ -139,9 +147,10 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 				x.Queue[update.Floor][2] = false
 				GState.Map[GState.Id] = x
 			}
-			Lights(GState, GState.Map[id], id)
+			setHallAndCabLights(GState, GState.Map[id], id)
 
-		case <-chMan.Watchdog:
+		case <-chMan.MotorstopWatchdog:
+			// Take responsibility for all hall orders
 			for floor := 0; floor < DataStructures.NumFloors; floor++ {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if GState.HallRequests[floor][button] {
@@ -156,7 +165,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 	}
 }
 
-func NetworkState(chMan DataStructures.ManagerChannels) {
+func UpdateNetworkPeers(chMan DataStructures.ManagerChannels) {
 	seen := make(map[string]time.Time)
 	timeOut := DataStructures.Timeout * time.Second
 	receiveNet := make(chan DataStructures.GlobalState)
@@ -183,7 +192,7 @@ func NetworkState(chMan DataStructures.ManagerChannels) {
 	}
 }
 
-func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.GlobalState) {
+func MotorstopWatchdog(chMan DataStructures.ManagerChannels, GState DataStructures.GlobalState) {
 	watchdogTimer := time.NewTimer(6 * time.Second)
 	var changedState bool
 	var hallreqExist bool
@@ -218,7 +227,7 @@ func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.Global
 			prevState = newState
 
 		case <-watchdogTimer.C:
-			chMan.Watchdog <- 1
+			chMan.MotorstopWatchdog <- 1
 		}
 	}
 }

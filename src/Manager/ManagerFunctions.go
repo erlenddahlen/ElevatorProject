@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+func managerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
 	DataStructures.HasBackup = false
 	var _, err1 = os.Stat(DataStructures.Backupfilename)
 
@@ -67,7 +67,7 @@ func chooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 	sort.Ints(keys)
 	for _, v := range keys {
 		keyString := strconv.Itoa(v)
-		times[i] = TimeToServeOrder(elevators[keyString], NewOrder)
+		times[i] = timeEstimateToServeOrder(elevators[keyString], NewOrder)
 		if times[i] <= times[indexBestElevator] {
 			indexBestElevator = i
 			keyBestElevator = keyString
@@ -77,7 +77,7 @@ func chooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 	return keyBestElevator
 }
 
-func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) int {
+func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) int {
 	tempElevator := e
 	tempElevator.Queue[button.Floor][button.Button] = true
 
@@ -117,7 +117,7 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	}
 }
 
-func Lights(GState DataStructures.GlobalState, elev DataStructures.Elev, id string) {
+func setHallAndCabLights(GState DataStructures.GlobalState, elev DataStructures.Elev, id string) {
 	for floor := 0; floor < DataStructures.NumFloors; floor++ {
 		if elev.Queue[floor][2] {
 			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, true)
@@ -135,5 +135,4 @@ func Lights(GState DataStructures.GlobalState, elev DataStructures.Elev, id stri
 			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, false)
 		}
 	}
-
 }
