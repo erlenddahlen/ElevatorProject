@@ -1,6 +1,6 @@
 package Governor
 import (
-	"../Config"
+	"../DataStructures"
 	 //"fmt"
 	 "time"
 )
@@ -10,11 +10,11 @@ import (
 //Watchdog should be a case in for/select in UpdateGlobalState
 //When activated, put all Hallreq in own queue
 
-func Watchdog(gchan Config.GovernorChannels, GState Config.GlobalState){
+func Watchdog(gchan DataStructures.GovernorChannels, GState DataStructures.GlobalState){
 	watchdogTimer := time.NewTimer(6 * time.Second)
 	var changedState bool
 	var hallreqExist bool
-	var prevState Config.GlobalState
+	var prevState DataStructures.GlobalState
 	prevState = GState
 
 
@@ -25,8 +25,8 @@ func Watchdog(gchan Config.GovernorChannels, GState Config.GlobalState){
 			hallreqExist = false
 
 			// Iterate through Hallreqs, if exists orders hallreq = true
-			for floor:= 0; floor < Config.NumFloors; floor++ {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			for floor:= 0; floor < DataStructures.NumFloors; floor++ {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if newState.HallRequests[floor][button] {
 						hallreqExist = true
 						break

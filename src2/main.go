@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"./Config"
+	"./DataStructures"
 	"./Governor"
 	"./PeerFSM"
 	"./elevio"
@@ -26,7 +26,7 @@ func main() {
 	elevio.Init("localhost:15657", 4)
 	fmt.Println("ID: ", id)
 
-	Config.Backupfilename = "backup" + id + ".txt"
+	DataStructures.Backupfilename = "backup" + id + ".txt"
 
 	// if id == "" {
 	//     localIP, err := localip.LocalIP()
@@ -37,25 +37,25 @@ func main() {
 	//     id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
 	// }
 
-	var GState Config.GlobalState
+	var GState DataStructures.GlobalState
 	GState = Governor.GovernorInit(GState, id)
 	//fmt.Println("Gstate init: ", GState)
 
-	PeerFSMChannels := Config.FSMChannels{
+	PeerFSMChannels := DataStructures.FSMChannels{
 		CurrentFloor:     make(chan int),
-		LocalStateUpdate: make(chan Config.Elev, 10),
-		PingFromGov:      make(chan Config.GlobalState),
-		ButtonPushed:     make(chan Config.ButtonEvent),
+		LocalStateUpdate: make(chan DataStructures.Elev, 10),
+		PingFromGov:      make(chan DataStructures.GlobalState),
+		ButtonPushed:     make(chan DataStructures.ButtonEvent),
 		//AddCabOrder:        make(chan int),
 		AddCabOrderGov: make(chan int),
 	}
 
-	GovernorChannels := Config.GovernorChannels{
-		InternalState: make(chan Config.GlobalState),
-		ExternalState: make(chan Config.GlobalState),
+	GovernorChannels := DataStructures.GovernorChannels{
+		InternalState: make(chan DataStructures.GlobalState),
+		ExternalState: make(chan DataStructures.GlobalState),
 		LostElev:      make(chan string),
-		AddHallOrder:  make(chan Config.ButtonEvent),
-		UpdatefromSpam: make(chan Config.GlobalState),
+		AddHallOrder:  make(chan DataStructures.ButtonEvent),
+		UpdatefromSpam: make(chan DataStructures.GlobalState),
 		Watchdog:		make(chan int),
 	}
 

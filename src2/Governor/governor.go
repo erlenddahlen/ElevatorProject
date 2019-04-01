@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"../Config"
+	"../DataStructures"
 
 	//	"../elevio"
 	"time"
@@ -16,17 +16,17 @@ import (
 )
 
 //Huske på: Vi MÅ sørge for at alle har den nyeste informasjonen når det gjøres en distribuering!
-var latestState Config.GlobalState
-var StateUpdate Config.GlobalState
+var latestState DataStructures.GlobalState
+var StateUpdate DataStructures.GlobalState
 
-func SpamGlobalState(gchan Config.GovernorChannels) { //Update and broadcast latest globalState from one peer
+func SpamGlobalState(gchan DataStructures.GovernorChannels) { //Update and broadcast latest globalState from one peer
 	//This is the global state
 	ticker := time.Tick(1000 * time.Millisecond)
-	transmitNet := make(chan Config.GlobalState)
+	transmitNet := make(chan DataStructures.GlobalState)
 	//i:= 0
 	go bcast.Transmitter(16700, transmitNet)
 
-	// transmitTest := make(chan map[string]Config.Elev)
+	// transmitTest := make(chan map[string]DataStructures.Elev)
 	// go bcast.Transmitter(16700, transmitTest)
 
 	for {
@@ -42,20 +42,20 @@ func SpamGlobalState(gchan Config.GovernorChannels) { //Update and broadcast lat
 
 		case newUpdate := <-gchan.InternalState:
 			latestState = newUpdate
-			var file, err1 = os.Create(Config.Backupfilename)
+			var file, err1 = os.Create(DataStructures.Backupfilename)
 			isError(err1)
 			GStatejason, _ := json.MarshalIndent(latestState, "", "")
-			_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
+			_ = ioutil.WriteFile(DataStructures.Backupfilename, GStatejason, 0644)
 			file.Close()
 			//fmt.Println("latestState:", latestState)
 		}
 	}
 }
 
-func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels, id string, GState Config.GlobalState) {
+func UpdateGlobalState(gchan DataStructures.GovernorChannels, FSMchan DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
 	//ticker := time.NewTicker(500 * time.Millisecond)
 	distribute := false
-	var hallOrder Config.ButtonEvent
+	var hallOrder DataStructures.ButtonEvent
 
 	for {
 		//Watchdog <- globalState, after 6 sec without activity in network, peer takes ownership of all global orders
@@ -75,10 +75,10 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			}
 			distribute = false
 		}
-		if Config.HasBackup{
+		if DataStructures.HasBackup{
 			fmt.Println("has backup")
-			Config.HasBackup = false
-			go func(FSMchan Config.FSMChannels) {
+			DataStructures.HasBackup = false
+			go func(FSMchan DataStructures.FSMChannels) {
 			time.Sleep(3 * time.Second)
 			FSMchan.PingFromGov <- GState
 			fmt.Println("ping sent to FSM from gov")
@@ -97,20 +97,20 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 
 			// 1. Set our info about the OutsideElev to the update from OutsideElev
 			GState.Map[Update.Id] = OutsideElev
-			// 2. If OutsideElev in state = DOOR_OPEN, remove orders in that floor
-			if OutsideElev.State == Config.DOOR_OPEN {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			// 2. If OutsideElev in state = DoorOpen, remove orders in that floor
+			if OutsideElev.State == DataStructures.DoorOpen {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					GState.HallRequests[OutsideElev.Floor][button] = false
 				}
 			}
 			// 3. Fylle lokal HallRequests med de evt nye knappetrykkene fra oppdateringen
 			// Ta vare på disse knappetrykkene så de kan bli distribuert
-			newOrder := Config.ButtonEvent{}
-			for floor := 0; floor < Config.NumFloors; floor++ {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			newOrder := DataStructures.ButtonEvent{}
+			for floor := 0; floor < DataStructures.NumFloors; floor++ {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if Update.HallRequests[floor][button] && !GState.HallRequests[floor][button] {
 						GState.HallRequests[floor][button] = true
-						newOrder = Config.ButtonEvent{floor, Config.ButtonType(button)}
+						newOrder = DataStructures.ButtonEvent{floor, DataStructures.ButtonType(button)}
 						fmt.Println("Order from other: ", newOrder)
 						keyBestElevator := ChooseElevator(GState.Map, newOrder, GState)
 						fmt.Println("Distributing to: ", keyBestElevator)
@@ -131,12 +131,12 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			//fmt.Println("Gov_2 in")
 			lostElev := GState.Map[Id]
 			delete(GState.Map, Id)
-			newOrder := Config.ButtonEvent{}
+			newOrder := DataStructures.ButtonEvent{}
 
-			for floor := 0; floor < Config.NumFloors; floor++ {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			for floor := 0; floor < DataStructures.NumFloors; floor++ {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if lostElev.Queue[floor][button] {
-						newOrder = Config.ButtonEvent{floor, Config.ButtonType(button)}
+						newOrder = DataStructures.ButtonEvent{floor, DataStructures.ButtonType(button)}
 						keyBestElevator := ChooseElevator(GState.Map, newOrder, GState)
 						if keyBestElevator == GState.Id {
 							var x = GState.Map[GState.Id]
@@ -173,9 +173,9 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 			var x = GState.Map[GState.Id]
 			x.Queue = tempQueue
 			GState.Map[GState.Id] = x
-			//Dersom staten som oppdateringen har(alstå FSM-state) er DOOR_OPEN, fjern hall i denne etasjen
-			if update.State == Config.DOOR_OPEN {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			//Dersom staten som oppdateringen har(alstå FSM-state) er DoorOpen, fjern hall i denne etasjen
+			if update.State == DataStructures.DoorOpen {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					GState.HallRequests[update.Floor][button] = false
 				}
 				var x = GState.Map[GState.Id]
@@ -192,8 +192,8 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 		case <-gchan.Watchdog:
 			fmt.Println("Watchdog timed out")
 			// En-to heiser henger, vi tildeler alle hallreq til oss selv
-			for floor := 0; floor < Config.NumFloors; floor++ {
-				for button := 0; button < Config.NumButtons-1; button++ {
+			for floor := 0; floor < DataStructures.NumFloors; floor++ {
+				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if GState.HallRequests[floor][button] {
 						var x = GState.Map[GState.Id]
 						x.Queue[floor][button] = true
@@ -206,14 +206,14 @@ func UpdateGlobalState(gchan Config.GovernorChannels, FSMchan Config.FSMChannels
 	}
 }
 
-func NetworkState(gchan Config.GovernorChannels) {
+func NetworkState(gchan DataStructures.GovernorChannels) {
 	seen := make(map[string]time.Time)
-	timeOut := Config.TIMEOUT * time.Second
+	timeOut := DataStructures.Timeout * time.Second
 
-	receiveNet := make(chan Config.GlobalState)
+	receiveNet := make(chan DataStructures.GlobalState)
 	go bcast.Receiver(16700, receiveNet)
 
-	// receiveTest := make(chan map[int]Config.Elev)
+	// receiveTest := make(chan map[int]DataStructures.Elev)
 	// go bcast.Receiver(16701, receiveTest)
 
 	for {
@@ -257,30 +257,30 @@ func isError(err error) bool {
 	return (err != nil)
 }
 
-func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
-	Config.HasBackup = false
-	var _, err1 = os.Stat(Config.Backupfilename)
+func GovernorInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+	DataStructures.HasBackup = false
+	var _, err1 = os.Stat(DataStructures.Backupfilename)
 	// If there is no backup, create one
 	if os.IsNotExist(err1) {
 
 
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
-		ElevState := Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, Queue1}
-		GState.Map = make(map[string]Config.Elev)
+		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, Queue1}
+		GState.Map = make(map[string]DataStructures.Elev)
 		GState.HallRequests = [4][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
 		GState.Id = id
 		GState.Map[GState.Id] = ElevState
 
-		var file, err1 = os.Create(Config.Backupfilename)
+		var file, err1 = os.Create(DataStructures.Backupfilename)
 		isError(err1)
 		defer file.Close()
 		GStatejason, _ := json.MarshalIndent(GState, "", "")
-		_ = ioutil.WriteFile(Config.Backupfilename, GStatejason, 0644)
+		_ = ioutil.WriteFile(DataStructures.Backupfilename, GStatejason, 0644)
 		return GState
 	} else {
-		Config.HasBackup = true
+		DataStructures.HasBackup = true
 		//Read backup file
-		GStateByte, err := ioutil.ReadFile(Config.Backupfilename) // just pass the file name
+		GStateByte, err := ioutil.ReadFile(DataStructures.Backupfilename) // just pass the file name
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -290,7 +290,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 		if error != nil {
 			fmt.Println("error:", error)
 		}
-		GState.Map[GState.Id] = Config.Elev{Config.UNKNOWN, Config.MD_Up, 0, GState.Map[GState.Id].Queue}
+		GState.Map[GState.Id] = DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, GState.Map[GState.Id].Queue}
 		fmt.Printf("State: %s", GStateByte)
 		return GState
 	}
@@ -302,7 +302,7 @@ func GovernorInit(GState Config.GlobalState, id string) Config.GlobalState {
 // //When activated, put all Hallreq in own queue
 //
 //
-// func Watchdog(gchan Config.GovernorChannels){
+// func Watchdog(gchan DataStructures.GovernorChannels){
 // 	latestState
 // 	ticker := time.Tick(6 * time.Second)
 // 	var change bool
