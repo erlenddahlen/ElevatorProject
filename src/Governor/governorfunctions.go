@@ -13,7 +13,6 @@ func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 	indexBestElevator := 0
 	keyBestElevator := GState.Id
 
-	//trying to convert to map
 	i := 0
 	keys := make([]int, 0)
 	for key, _ := range elevators {
@@ -24,7 +23,6 @@ func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 		keys = append(keys, keyInt)
 	}
 	sort.Ints(keys)
-	//fmt.Println(keys)
 	for _,v:= range keys{
 		keyString:= strconv.Itoa(v)
 		times[i] = TimeToServeOrder(elevators[keyString], NewOrder)
@@ -34,33 +32,8 @@ func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 			}
 		i++
 	}
-
-
-	// for key, _ := range elevators {
-	// 	keyInt, error := strconv.Atoi(key)
-	// 	if error != nil {
-	// 			fmt.Println(error.Error())
-	// 	}
-
-	// 	times[i] = TimeToServeOrder(elevators[key], NewOrder)
-	// 	if times[i] <= times[indexBestElevator] && keyInt < lowestkey{
-	// 		indexBestElevator = i
-	// 		keyBestElevator = key
-	// 		lowestkey = keyInt
-  //       }
-	// 	i++
-	// }
-
-	//return elevators[keyBestElevator]
-	fmt.Println("Choose finished, key: ", keyBestElevator)
     return keyBestElevator
 }
-
-/*
-func AssignOrder(elevator Elevator, Order elevio.ButtonEvent) {
-	//Assign the order to the chosen elevator
-}
-*/
 
 func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) int {
 	tempElevator := e
@@ -101,4 +74,25 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 		timeUsed += DataStructures.TravelTime
         count = count + 1
 	}
+}
+
+func Lights(GState DataStructures.GlobalState, peer DataStructures.Elev, id string) {
+	for floor := 0; floor < DataStructures.NumFloors; floor++ {
+		if peer.Queue[floor][2] {
+			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, false)
+		}
+		if GState.HallRequests[floor][0] {
+			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, false)
+		}
+		if GState.HallRequests[floor][1] {
+			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, false)
+		}
+	}
+
 }

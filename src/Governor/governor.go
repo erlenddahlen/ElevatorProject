@@ -15,7 +15,6 @@ import (
 	"../network/bcast"
 )
 
-//Huske på: Vi MÅ sørge for at alle har den nyeste informasjonen når det gjøres en distribuering!
 var latestState DataStructures.GlobalState
 var StateUpdate DataStructures.GlobalState
 
