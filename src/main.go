@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"flag"
+	"fmt"
 
 	"./DataStructures"
 	"./Manager"
@@ -20,30 +20,29 @@ func main() {
 	elevio.Init("localhost:15657", 4)
 	fmt.Println("ID: ", id)
 
-//	Define a unique backup file name
+	//	Define a unique backup file name
 	DataStructures.Backupfilename = "backup" + id + ".txt"
 
 	var GState DataStructures.GlobalState
 	//Init state, use backup if backup file available
 	GState = Manager.ManagerInit(GState, id)
 
-
 	FSMChannels := DataStructures.FSMChannels{
-		AtFloor:     make(chan int),
-		UpdateFromFSM: make(chan DataStructures.Elev, 10),
-		UpdateFromManger:      make(chan DataStructures.GlobalState),
-		ButtonPushed:     make(chan DataStructures.ButtonEvent),
-		AddCabOrder:		make(chan int),
-		AddCabOrderManager: 	make(chan int),
+		AtFloor:            make(chan int),
+		UpdateFromFSM:      make(chan DataStructures.Elev, 10),
+		UpdateFromManger:   make(chan DataStructures.GlobalState),
+		ButtonPushed:       make(chan DataStructures.ButtonEvent),
+		AddCabOrder:        make(chan int),
+		AddCabOrderManager: make(chan int),
 	}
 
 	ManagerChannels := DataStructures.ManagerChannels{
-		InternalState: 		make(chan DataStructures.GlobalState),
-		ExternalState: 		make(chan DataStructures.GlobalState),
-		LostElev:      		make(chan string),
-		AddHallOrder:  		make(chan DataStructures.ButtonEvent),
-		UpdatefromSpam: 	make(chan DataStructures.GlobalState),
-		Watchdog:					make(chan int),
+		InternalState:  make(chan DataStructures.GlobalState),
+		ExternalState:  make(chan DataStructures.GlobalState),
+		LostElev:       make(chan string),
+		AddHallOrder:   make(chan DataStructures.ButtonEvent),
+		UpdatefromSpam: make(chan DataStructures.GlobalState),
+		Watchdog:       make(chan int),
 	}
 
 	go Manager.UpdateGlobalState(ManagerChannels, FSMChannels, id, GState)

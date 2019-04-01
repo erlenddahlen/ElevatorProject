@@ -1,9 +1,9 @@
 package FSM
 
 import (
-	"time"
 	"../DataStructures"
 	"../elevio"
+	"time"
 )
 
 func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
@@ -23,27 +23,13 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 			elev.Queue = update.Map[id].Queue
 
 			switch elev.State {
-				case DataStructures.Idle:
-					elev.Dir = GetNextDir(elev)
-					elevio.SetMotorDirection(elev.Dir)
+			case DataStructures.Idle:
+				elev.Dir = getNextDir(elev)
+				elevio.SetMotorDirection(elev.Dir)
 
-					if elev.Dir != DataStructures.MD_Stop {
-						elev.State = DataStructures.Moving
-					} else {
-						if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
-							elevio.SetDoorOpenLamp(true)
-							doorTimerDone = time.NewTimer(3 * time.Second)
-							elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
-							elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
-							elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
-							elev.State = DataStructures.DoorOpen
-							chFSM.UpdateFromFSM <- elev
-						} else {
-							elev.State = DataStructures.Idle
-						}
-					}
-
-				case DataStructures.DoorOpen:
+				if elev.Dir != DataStructures.MotorDirStop {
+					elev.State = DataStructures.Moving
+				} else {
 					if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
 						elevio.SetDoorOpenLamp(true)
 						doorTimerDone = time.NewTimer(3 * time.Second)
@@ -51,8 +37,22 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 						elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
 						elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
 						elev.State = DataStructures.DoorOpen
+						chFSM.UpdateFromFSM <- elev
+					} else {
+						elev.State = DataStructures.Idle
 					}
 				}
+
+			case DataStructures.DoorOpen:
+				if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
+					elevio.SetDoorOpenLamp(true)
+					doorTimerDone = time.NewTimer(3 * time.Second)
+					elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
+					elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
+					elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+					elev.State = DataStructures.DoorOpen
+				}
+			}
 
 		case currentFloor := <-chFSM.AtFloor:
 			elev.Floor = currentFloor
@@ -60,12 +60,12 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 
 			switch elev.State {
 			case DataStructures.Unknown:
-				elevio.SetMotorDirection(elevio.MD_Stop)
+				elevio.SetMotorDirection(elevio.MotorDirStop)
 				elev.State = DataStructures.Idle
 
 			case DataStructures.Moving:
-				if ShouldStop(elev) {
-					elevio.SetMotorDirection(DataStructures.MD_Stop)
+				if shouldStop(elev) {
+					elevio.SetMotorDirection(DataStructures.MotorDirStop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimerDone = time.NewTimer(3 * time.Second)
 					elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
@@ -77,9 +77,9 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 
 		case <-doorTimerDone.C:
 			elevio.SetDoorOpenLamp(false)
-			elev.Dir = GetNextDir(elev)
+			elev.Dir = getNextDir(elev)
 			elevio.SetMotorDirection(elev.Dir)
-			if elev.Dir != DataStructures.MD_Stop {
+			if elev.Dir != DataStructures.MotorDirStop {
 				elev.State = DataStructures.Moving
 			} else {
 				elev.State = DataStructures.Idle

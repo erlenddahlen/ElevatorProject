@@ -4,38 +4,38 @@ import (
 	"../DataStructures"
 )
 
-func GetNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
+func getNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 
-	if elev.Dir == DataStructures.MD_Stop {
+	if elev.Dir == DataStructures.MotorDirStop {
 
-		if OrderAbove(elev) {
-			return DataStructures.MD_Up
-		} else if OrderBelow(elev) {
-			return DataStructures.MD_Down
+		if orderAbove(elev) {
+			return DataStructures.MotorDirUp
+		} else if orderBelow(elev) {
+			return DataStructures.MotorDirDown
 		} else {
-			return DataStructures.MD_Stop
+			return DataStructures.MotorDirStop
 		}
-	} else if elev.Dir == DataStructures.MD_Up {
-		if OrderAbove(elev) {
-			return DataStructures.MD_Up
-		} else if OrderBelow(elev) {
-			return DataStructures.MD_Down
+	} else if elev.Dir == DataStructures.MotorDirUp {
+		if orderAbove(elev) {
+			return DataStructures.MotorDirUp
+		} else if orderBelow(elev) {
+			return DataStructures.MotorDirDown
 		} else {
-			return DataStructures.MD_Stop
+			return DataStructures.MotorDirStop
 		}
 	} else {
-		if OrderBelow(elev) {
-			return DataStructures.MD_Down
-		} else if OrderAbove(elev) {
-			return DataStructures.MD_Up
+		if orderBelow(elev) {
+			return DataStructures.MotorDirDown
+		} else if orderAbove(elev) {
+			return DataStructures.MotorDirUp
 		} else {
-			return DataStructures.MD_Stop
+			return DataStructures.MotorDirStop
 		}
 	}
-	return DataStructures.MD_Stop
+	return DataStructures.MotorDirStop
 }
 
-func OrderAbove(elev DataStructures.Elev) bool {
+func orderAbove(elev DataStructures.Elev) bool {
 	for floor := elev.Floor + 1; floor < DataStructures.NumFloors; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -46,7 +46,7 @@ func OrderAbove(elev DataStructures.Elev) bool {
 	return false
 }
 
-func OrderBelow(elev DataStructures.Elev) bool {
+func orderBelow(elev DataStructures.Elev) bool {
 	for floor := 0; floor < elev.Floor; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -57,15 +57,15 @@ func OrderBelow(elev DataStructures.Elev) bool {
 	return false
 }
 
-func ShouldStop(elev DataStructures.Elev) bool {
+func shouldStop(elev DataStructures.Elev) bool {
 	switch elev.Dir {
-	case DataStructures.MD_Up:
-		return (elev.Queue[elev.Floor][DataStructures.BT_HallUp] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderAbove(elev))
+	case DataStructures.MotorDirUp:
+		return (elev.Queue[elev.Floor][DataStructures.BT_HallUp] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !orderAbove(elev))
 
-	case DataStructures.MD_Down:
-		return (elev.Queue[elev.Floor][DataStructures.BT_HallDown] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderBelow(elev))
+	case DataStructures.MotorDirDown:
+		return (elev.Queue[elev.Floor][DataStructures.BT_HallDown] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !orderBelow(elev))
 
-	case DataStructures.MD_Stop:
+	case DataStructures.MotorDirStop:
 
 	default:
 	}

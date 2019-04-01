@@ -16,7 +16,7 @@ func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.Gl
 
 	if os.IsNotExist(err1) {
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
-		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, Queue1}
+		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MotorDirUp, 0, Queue1}
 		GState.Map = make(map[string]DataStructures.Elev)
 		GState.HallRequests = [4][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
 		GState.Id = id
@@ -37,7 +37,7 @@ func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.Gl
 		if error != nil {
 			fmt.Println("error:", error)
 		}
-		GState.Map[GState.Id] = DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, GState.Map[GState.Id].Queue}
+		GState.Map[GState.Id] = DataStructures.Elev{DataStructures.Unknown, DataStructures.MotorDirUp, 0, GState.Map[GState.Id].Queue}
 		return GState
 	}
 }
@@ -85,8 +85,8 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 
 	switch tempElevator.State {
 	case DataStructures.Idle:
-		tempElevator.Dir = FSM.GetNextDir(tempElevator)
-		if tempElevator.Dir == DataStructures.MD_Stop {
+		tempElevator.Dir = FSM.getNextDir(tempElevator)
+		if tempElevator.Dir == DataStructures.MotorDirStop {
 			return timeUsed
 		}
 	case DataStructures.Moving:
@@ -97,19 +97,19 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	}
     count := 0
 	for {
-		if FSM.ShouldStop(tempElevator) {
+		if FSM.shouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
 				return timeUsed
 			}
 			tempElevator.Queue[tempElevator.Floor][DataStructures.BT_Cab] = false
-			if tempElevator.Dir == DataStructures.MD_Up || !FSM.OrderAbove(tempElevator) {
+			if tempElevator.Dir == DataStructures.MotorDirUp || !FSM.orderAbove(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallUp] = false
 			}
-			if tempElevator.Dir == DataStructures.MD_Down || !FSM.OrderBelow(tempElevator) {
+			if tempElevator.Dir == DataStructures.MotorDirDown || !FSM.orderBelow(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallDown] = false
 			}
 			timeUsed += DataStructures.DoorOpenTime
-			tempElevator.Dir = FSM.GetNextDir(tempElevator)
+			tempElevator.Dir = FSM.getNextDir(tempElevator)
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime

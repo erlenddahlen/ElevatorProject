@@ -2,12 +2,12 @@ package DataStructures
 
 // Scaleable declaration of #floors and #elevators
 const (
-	NumFloors 		= 4
-	NumButtons    = 3
-	Timeout       = 5
-	TravelTime    = 5
-	DoorOpenTime 	= 3
-	NumOfElev     = 3
+	NumFloors    = 4
+	NumButtons   = 3
+	Timeout      = 5
+	TravelTime   = 5
+	DoorOpenTime = 3
+	NumOfElev    = 3
 )
 
 // Name of backupfile
@@ -17,26 +17,18 @@ var HasBackup bool
 type ElevState int
 
 const (
-	Unknown	ElevState = iota - 1
-	Idle              = 0
-	DoorOpen          = 1
-	Moving            = 2
-)
-
-type Direction int
-
-const (
-	DirDown Direction = -1
-	DirStop Direction = 0
-	DirUp   Direction = 1
+	Unknown  ElevState = iota - 1
+	Idle               = 0
+	DoorOpen           = 1
+	Moving             = 2
 )
 
 type MotorDirection int
 
 const (
-	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
+	MotorDirUp   MotorDirection = 1
+	MotorDirDown                = -1
+	MotorDirStop                = 0
 )
 
 type Elev struct {
@@ -66,12 +58,12 @@ type ButtonEvent struct {
 }
 
 type FSMChannels struct {
-	AtFloor     chan int
-	UpdateFromFSM chan Elev
-	UpdateFromManger      chan GlobalState
-	ButtonPushed     chan ButtonEvent
-	AddCabOrder      chan int
-	AddCabOrderManager   chan int
+	AtFloor            chan int
+	UpdateFromFSM      chan Elev
+	UpdateFromManger   chan GlobalState
+	ButtonPushed       chan ButtonEvent
+	AddCabOrder        chan int
+	AddCabOrderManager chan int
 }
 
 type ManagerChannels struct { //decalred in config file

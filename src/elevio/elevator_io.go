@@ -6,22 +6,12 @@ import "net"
 import "fmt"
 import "../DataStructures"
 
-
-
 const _pollRate = 20 * time.Millisecond
 
 var _initialized bool = false
 var _numFloors int = 4
 var _mtx sync.Mutex
 var _conn net.Conn
-
-type MotorDirection int
-
-const (
-	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
-)
 
 type ButtonType int
 
@@ -35,11 +25,6 @@ type ButtonEvent struct {
 	Floor  int
 	Button ButtonType
 }
-
-
-
-
-
 
 func Init(addr string, numFloors int) {
 	if _initialized {
@@ -55,8 +40,6 @@ func Init(addr string, numFloors int) {
 	}
 	_initialized = true
 }
-
-
 
 func SetMotorDirection(dir DataStructures.MotorDirection) {
 	_mtx.Lock()
@@ -87,8 +70,6 @@ func SetStopLamp(value bool) {
 	defer _mtx.Unlock()
 	_conn.Write([]byte{5, toByte(value), 0, 0})
 }
-
-
 
 func PollButtons(receiver chan<- DataStructures.ButtonEvent) {
 	prev := make([][3]bool, _numFloors)
@@ -141,12 +122,6 @@ func PollObstructionSwitch(receiver chan<- bool) {
 		prev = v
 	}
 }
-
-
-
-
-
-
 
 func getButton(button DataStructures.ButtonType, floor int) bool {
 	_mtx.Lock()

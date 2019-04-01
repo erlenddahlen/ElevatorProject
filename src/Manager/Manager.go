@@ -1,14 +1,14 @@
 package Manager
 
 import (
+	"../DataStructures"
+	"../FSM"
+	"../network/bcast"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"../DataStructures"
 	"time"
-	"../FSM"
-	"../network/bcast"
 )
 
 var latestState DataStructures.GlobalState
@@ -55,12 +55,12 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 			distribute = false
 		}
 
-		if DataStructures.HasBackup{
+		if DataStructures.HasBackup {
 			DataStructures.HasBackup = false
 			go func(FSMchan DataStructures.FSMChannels) {
-			time.Sleep(3 * time.Second)
-			FSMchan.UpdateFromManager <- GState
-			} (FSMchan)
+				time.Sleep(3 * time.Second)
+				FSMchan.UpdateFromManager <- GState
+			}(FSMchan)
 		}
 
 		select {
@@ -183,21 +183,20 @@ func NetworkState(chMan DataStructures.ManagerChannels) {
 	}
 }
 
-
-func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.GlobalState){
+func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.GlobalState) {
 	watchdogTimer := time.NewTimer(6 * time.Second)
 	var changedState bool
 	var hallreqExist bool
 	var prevState DataStructures.GlobalState
 	prevState = GState
 
-	for{
-		select{
-		case newState := <- chMan.UpdatefromSpam:
+	for {
+		select {
+		case newState := <-chMan.UpdatefromSpam:
 			changedState = false
 			hallreqExist = false
 
-			for floor:= 0; floor < DataStructures.NumFloors; floor++ {
+			for floor := 0; floor < DataStructures.NumFloors; floor++ {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if newState.HallRequests[floor][button] {
 						hallreqExist = true
@@ -206,19 +205,19 @@ func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.Global
 				}
 			}
 
-			for key, _:= range newState.Map{
-				if newState.Map[key].State != prevState.Map[key].State ||  newState.Map[key].Floor != prevState.Map[key].Floor{
+			for key, _ := range newState.Map {
+				if newState.Map[key].State != prevState.Map[key].State || newState.Map[key].Floor != prevState.Map[key].Floor {
 					changedState = true
 					break
 				}
 			}
 
-			if changedState || !(hallreqExist){
-					watchdogTimer = time.NewTimer(6 * time.Second)
+			if changedState || !(hallreqExist) {
+				watchdogTimer = time.NewTimer(6 * time.Second)
 			}
 			prevState = newState
 
-		case <- watchdogTimer.C:
+		case <-watchdogTimer.C:
 			chMan.Watchdog <- 1
 		}
 	}
