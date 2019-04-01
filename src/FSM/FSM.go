@@ -7,7 +7,7 @@ import (
 	"../elevio"
 )
 
-func handleIo(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMChannels) {
+func handleIo(chGov DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels) {
 	go elevio.PollButtons(chFSM.ButtonPushed)
 	go elevio.PollFloorSensor(chFSM.CurrentFloor)
 	for {
@@ -28,7 +28,7 @@ func handleIo(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMCha
 }
 
 
-func FSM(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
+func FSM(chGov DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
 
 	// Init doorTimer, MotorDirection and peer
 	doorTimerDone := time.NewTimer(0)

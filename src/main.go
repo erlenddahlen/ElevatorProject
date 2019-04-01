@@ -5,7 +5,7 @@ import (
 	"flag"
 
 	"./DataStructures"
-	"./Governor"
+	"./Manager"
 	"./PeerFSM"
 	"./elevio"
 )
@@ -24,7 +24,7 @@ func main() {
 	DataStructures.Backupfilename = "backup" + id + ".txt"
 
 	var GState DataStructures.GlobalState
-	GState = Governor.GovernorInit(GState, id)
+	GState = Manager.ManagerInit(GState, id)
 
 	PeerFSMChannels := DataStructures.FSMChannels{
 		CurrentFloor:     make(chan int),
@@ -34,7 +34,7 @@ func main() {
 		AddCabOrderGov: 	make(chan int),
 	}
 
-	GovernorChannels := DataStructures.GovernorChannels{
+	ManagerChannels := DataStructures.ManagerChannels{
 		InternalState: 		make(chan DataStructures.GlobalState),
 		ExternalState: 		make(chan DataStructures.GlobalState),
 		LostElev:      		make(chan string),
@@ -43,11 +43,11 @@ func main() {
 		Watchdog:					make(chan int),
 	}
 
-	go Governor.UpdateGlobalState(GovernorChannels, PeerFSMChannels, id, GState)
-	go Governor.SpamGlobalState(GovernorChannels)
-	go Governor.NetworkState(GovernorChannels)
-	go Governor.Watchdog(GovernorChannels, GState)
-	go PeerFSM.FSM(GovernorChannels, PeerFSMChannels, id, GState)
+	go Manager.UpdateGlobalState(ManagerChannels, PeerFSMChannels, id, GState)
+	go Manager.SpamGlobalState(ManagerChannels)
+	go Manager.NetworkState(ManagerChannels)
+	go Manager.Watchdog(ManagerChannels, GState)
+	go PeerFSM.FSM(ManagerChannels, PeerFSMChannels, id, GState)
 
 	for {
 		//Run elevator

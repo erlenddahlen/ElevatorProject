@@ -1,4 +1,4 @@
-package Governor
+package Manager
 //
 import (
 	"../DataStructures"

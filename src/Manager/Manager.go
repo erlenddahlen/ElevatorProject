@@ -1,4 +1,4 @@
-package Governor
+package Manager
 
 import (
 	"encoding/json"
@@ -18,7 +18,7 @@ import (
 var latestState DataStructures.GlobalState
 var StateUpdate DataStructures.GlobalState
 
-func SpamGlobalState(gchan DataStructures.GovernorChannels) { //Update and broadcast latest globalState from one peer
+func SpamGlobalState(gchan DataStructures.ManagerChannels) { //Update and broadcast latest globalState from one peer
 	//This is the global state
 	ticker := time.Tick(1000 * time.Millisecond)
 	transmitNet := make(chan DataStructures.GlobalState)
@@ -51,7 +51,7 @@ func SpamGlobalState(gchan DataStructures.GovernorChannels) { //Update and broad
 	}
 }
 
-func UpdateGlobalState(gchan DataStructures.GovernorChannels, FSMchan DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
+func UpdateGlobalState(gchan DataStructures.ManagerChannels, FSMchan DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
 	//ticker := time.NewTicker(500 * time.Millisecond)
 	distribute := false
 	var hallOrder DataStructures.ButtonEvent
@@ -205,7 +205,7 @@ func UpdateGlobalState(gchan DataStructures.GovernorChannels, FSMchan DataStruct
 	}
 }
 
-func NetworkState(gchan DataStructures.GovernorChannels) {
+func NetworkState(gchan DataStructures.ManagerChannels) {
 	seen := make(map[string]time.Time)
 	timeOut := DataStructures.Timeout * time.Second
 
@@ -256,7 +256,7 @@ func isError(err error) bool {
 	return (err != nil)
 }
 
-func GovernorInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
 	DataStructures.HasBackup = false
 	var _, err1 = os.Stat(DataStructures.Backupfilename)
 	// If there is no backup, create one
@@ -301,7 +301,7 @@ func GovernorInit(GState DataStructures.GlobalState, id string) DataStructures.G
 // //When activated, put all Hallreq in own queue
 //
 //
-// func Watchdog(gchan DataStructures.GovernorChannels){
+// func Watchdog(gchan DataStructures.ManagerChannels){
 // 	latestState
 // 	ticker := time.Tick(6 * time.Second)
 // 	var change bool

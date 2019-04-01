@@ -74,7 +74,7 @@ type FSMChannels struct {
 	AddCabOrderGov   chan int
 }
 
-type GovernorChannels struct { //decalred in config file
+type ManagerChannels struct { //decalred in config file
 	InternalState  chan GlobalState
 	ExternalState  chan GlobalState
 	LostElev       chan string

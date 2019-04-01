@@ -1,4 +1,4 @@
-package Governor
+package Manager
 import (
 	"../DataStructures"
 	 //"fmt"
@@ -10,7 +10,7 @@ import (
 //Watchdog should be a case in for/select in UpdateGlobalState
 //When activated, put all Hallreq in own queue
 
-func Watchdog(gchan DataStructures.GovernorChannels, GState DataStructures.GlobalState){
+func Watchdog(gchan DataStructures.ManagerChannels, GState DataStructures.GlobalState){
 	watchdogTimer := time.NewTimer(6 * time.Second)
 	var changedState bool
 	var hallreqExist bool
