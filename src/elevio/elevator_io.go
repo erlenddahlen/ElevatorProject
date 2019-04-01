@@ -16,9 +16,9 @@ var _conn net.Conn
 type ButtonType int
 
 const (
-	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
+	HallUp   ButtonType = 0
+	HallDown            = 1
+	Cab                 = 2
 )
 
 type ButtonEvent struct {

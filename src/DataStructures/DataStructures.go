@@ -1,6 +1,6 @@
 package DataStructures
 
-// Scaleable declaration of #floors and #elevators
+// Config constants
 const (
 	NumFloors                = 4
 	NumButtons               = 3
@@ -13,8 +13,7 @@ const (
 	MotorstopWatchdogTimeout = 6 //s
 )
 
-// Name of backupfile
-var Backupfilename string
+var BackupFilename string
 var HasBackup bool
 
 type ElevState int
@@ -34,6 +33,14 @@ const (
 	MotorDirStop                = 0
 )
 
+/*
+Structure of Queue
+Floor 			Button
+	1.	Up	|		-		|	Cab
+	2.	Up	|	Down	|	Cab
+	3.	Up	|	Down	|	Cab
+	4.	-		|	Down	|	Cab
+*/
 type Elev struct {
 	State ElevState
 	Dir   MotorDirection
@@ -41,6 +48,14 @@ type Elev struct {
 	Queue [NumFloors][NumButtons]bool
 }
 
+/*
+Structure of HallRequests
+Floor 	Button
+	1.	Up	|	-
+	2.	Up	|	Down
+	3.	Up	|	Down
+	4.	-		|	Down
+*/
 type GlobalState struct {
 	Map          map[string]Elev
 	HallRequests [4][2]bool
@@ -50,9 +65,9 @@ type GlobalState struct {
 type ButtonType int
 
 const (
-	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
+	HallUp   ButtonType = 0
+	HallDown            = 1
+	Cab                 = 2
 )
 
 type ButtonEvent struct {

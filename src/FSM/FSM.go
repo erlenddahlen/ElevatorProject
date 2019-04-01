@@ -27,9 +27,10 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 				elev.Dir = GetNextDir(elev)
 				elevio.SetMotorDirection(elev.Dir)
 
-				if elev.Dir != DataStructures.MotorDirStop {
+				if elev.Dir != DataStructures.MotorDirStop { // If  new order is not on the current floor
 					elev.State = DataStructures.Moving
 				} else {
+					//Open door if new order is on current floor
 					if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
 						elevio.SetDoorOpenLamp(true)
 						doorTimerDone = time.NewTimer(3 * time.Second)
@@ -38,7 +39,7 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 						elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
 						elev.State = DataStructures.DoorOpen
 						chFSM.UpdateFromFSM <- elev
-					} else {
+					} else { //No orders in queue
 						elev.State = DataStructures.Idle
 					}
 				}

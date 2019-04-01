@@ -3,7 +3,7 @@ package Manager
 import (
 	"../DataStructures"
 	"../network/bcast"
-		"encoding/json"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"time"
@@ -28,10 +28,10 @@ func SpamGlobalState(chMan DataStructures.ManagerChannels) {
 			latestState = newUpdate
 
 			//Write global state to log
-			var file, err1 = os.Create(DataStructures.Backupfilename)
+			var file, err1 = os.Create(DataStructures.BackupFilename)
 			isError(err1)
 			GStatejason, _ := json.MarshalIndent(latestState, "", "")
-			_ = ioutil.WriteFile(DataStructures.Backupfilename, GStatejason, 0644)
+			_ = ioutil.WriteFile(DataStructures.BackupFilename, GStatejason, 0644)
 			file.Close()
 		}
 	}
