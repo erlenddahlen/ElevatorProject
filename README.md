@@ -1,12 +1,13 @@
 Elevator Project
 ================
 
-Modules:
--------
-The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors.
+The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer.
 
 This code is specifically made for three elevators and four floors.
 
+
+Module descriptions
+---------------------
 Modules:
 - FSM
 - Manager
@@ -16,9 +17,9 @@ Extra packages:
 - elevio
 - DataStructures
 
-FSM
--------
-The FSM module is the Finite State Machine for controlling one elevator. It consists four states and three main events
+## FSM
+
+The FSM module is the Finite State Machine for controlling one elevator. It consists four states and three main events:
 
 State| Event
 ------------ | -------------
@@ -35,14 +36,19 @@ The FSM module also have a GO routine for checking if buttons are pushed and if 
 
 (#1) The functions in FSMFunctions.go handles these operations.
 
-Manager
--------
+## Manager
+
+The Manager module
+
+ansvar for å alltd ha ny informasjon og sende dette ut, og sende denne infoen videre til FSM
+
+## Network
 
 
 
+Error handling functionality
+---------------------------
 
-Network
--------
 
 
 Summary
@@ -66,7 +72,7 @@ No orders are lost
    - The elevator software should not require reinitialization (manual restart) after intermittent network or motor power loss
 
 Multiple elevators should be more efficient than one
- - The orders should be newOrdersd across the elevators in a reasonable way
+ - The orders should be distributed across the elevators in a reasonable way
    - Ex: If all three elevators are idle and two of them are at the bottom floor, then a new order at the top floor should be handled by the closest elevator (ie. neither of the two at the bottom).
  - You are free to choose and design your own "cost function" of some sort: Minimal movement, minimal waiting time, etc.
  - The project is not about creating the "best" or "optimal" distribution of orders. It only has to be clear that the elevators are cooperating and communicating.
