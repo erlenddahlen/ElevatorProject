@@ -1,7 +1,7 @@
 TTK4145 - Elevator Project
 ================================
 
-The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer. The chosen peer is then responsible for this order.
+This system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors. The architecture is constructed on a peer-to-peer concept where all the peers on the network cooperate to execute orders. The idea is that all the peers always have the same and latest information about each other and about the orders awaiting to be executed. With this assumption they can decide which of the other peers that should handle a specific order, by optimizing a cost function based on the state of the elevator of the peer. The chosen peer is then responsible for this order.
 
 In addition, the system also have functionality to handle error. This includes spamming the network to achieve correctness of information, backup files and a watchdog to monitor elevator motor stop.
 
@@ -53,7 +53,7 @@ Handles the hardware of the system. Initializing hardware, handling motor, butto
 
 
 #### DataStructures
-Defining constants and types of structs.
+Defining constants and types of structs. Own file to avoid circular dependencies. 
 
 Error handling functionality
 ---------------------------
