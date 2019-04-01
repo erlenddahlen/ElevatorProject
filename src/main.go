@@ -25,7 +25,7 @@ func main() {
 
 	var GState DataStructures.GlobalState
 	//Init state, use backup if backup file available
-	GState = Manager.managerInit(GState, id)
+	GState = Manager.ManagerInit(GState, id)
 
 	FSMChannels := DataStructures.FSMChannels{
 		AtFloor:            make(chan int),
