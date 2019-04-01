@@ -1,9 +1,8 @@
-package PeerFSM
+package FSM
 
 import (
 	"fmt"
 	"time"
-
 	"../DataStructures"
 	"../elevio"
 )
@@ -28,26 +27,7 @@ func handleIo(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMCha
 
 }
 
-func Lights(GState DataStructures.GlobalState, peer DataStructures.Elev, id string) {
-	for floor := 0; floor < DataStructures.NumFloors; floor++ {
-		if peer.Queue[floor][2] {
-			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, false)
-		}
-		if GState.HallRequests[floor][0] {
-			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, false)
-		}
-		if GState.HallRequests[floor][1] {
-			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, false)
-		}
-	}
 
-}
 func FSM(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
 
 	// Init doorTimer, MotorDirection and peer
@@ -158,79 +138,4 @@ func FSM(chGov DataStructures.GovernorChannels, chFSM DataStructures.FSMChannels
 		}
 	}
 
-}
-
-// FSM HELP FUNCTIONS
-
-func GetNextDir(peer DataStructures.Elev) DataStructures.MotorDirection {
-
-	if peer.Dir == DataStructures.MD_Stop {
-
-		if OrderAbove(peer) {
-			return DataStructures.MD_Up
-		} else if OrderBelow(peer) {
-			return DataStructures.MD_Down
-		} else {
-			return DataStructures.MD_Stop
-		}
-	} else if peer.Dir == DataStructures.MD_Up {
-		if OrderAbove(peer) {
-			return DataStructures.MD_Up
-		} else if OrderBelow(peer) {
-			return DataStructures.MD_Down
-		} else {
-			return DataStructures.MD_Stop
-		}
-	} else {
-		if OrderBelow(peer) {
-			return DataStructures.MD_Down
-		} else if OrderAbove(peer) {
-			return DataStructures.MD_Up
-		} else {
-			return DataStructures.MD_Stop
-		}
-	}
-	return DataStructures.MD_Stop
-}
-
-func OrderAbove(peer DataStructures.Elev) bool {
-	for floor := peer.Floor + 1; floor < DataStructures.NumFloors; floor++ {
-		for button := 0; button < DataStructures.NumButtons; button++ {
-			if peer.Queue[floor][button] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func OrderBelow(peer DataStructures.Elev) bool {
-	for floor := 0; floor < peer.Floor; floor++ {
-		for button := 0; button < DataStructures.NumButtons; button++ {
-			if peer.Queue[floor][button] {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func ShouldStop(peer DataStructures.Elev) bool {
-	//fmt.Println("peer.Dir: ", peer.Dir)
-	//fmt.Println("peer.Floor: ", peer.Floor)
-	switch peer.Dir {
-	case DataStructures.MD_Up:
-		//fmt.Println("MD_Up: ", peer.Queue[peer.Floor][DataStructures.BT_HallUp], peer.Queue[peer.Floor][DataStructures.BT_Cab], !OrderAbove(peer))
-		return (peer.Queue[peer.Floor][DataStructures.BT_HallUp] || peer.Queue[peer.Floor][DataStructures.BT_Cab] || !OrderAbove(peer))
-	case DataStructures.MD_Down:
-		//fmt.Println("MD_Down: ", peer.Queue[peer.Floor][DataStructures.BT_HallDown],  peer.Queue[peer.Floor][DataStructures.BT_Cab], !OrderBelow(peer))
-		return (peer.Queue[peer.Floor][DataStructures.BT_HallDown] || peer.Queue[peer.Floor][DataStructures.BT_Cab] || !OrderBelow(peer))
-	case DataStructures.MD_Stop:
-		// fmt.Println("MD_Stop: ", peer.Queue[peer.Floor][DataStructures.BT_HallUp ], peer.Queue[peer.Floor][DataStructures.BT_HallDown], peer.Queue[peer.Floor][DataStructures.BT_Cab])
-		// if(peer.Queue[peer.Floor][DataStructures.BT_HallUp ] || peer.Queue[peer.Floor][DataStructures.BT_HallDown] || peer.Queue[peer.Floor][DataStructures.BT_Cab]){
-		//     return true
-		// }
-	default:
-	}
-	return false
 }
