@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 
 	"./DataStructures"
 	"./FSM"
@@ -12,16 +11,14 @@ import (
 
 func main() {
 
-	// Setting id to the individual elevator
 	var id string
 	flag.StringVar(&id, "id", "", "id of this peer")
-
 	flag.Parse()
+
 	elevio.Init("localhost:15657", 4)
-	fmt.Println("ID: ", id)
 
 	//	Define a unique backup file name
-	DataStructures.Backupfilename = "backup" + id + ".txt"
+	DataStructures.BackupFilename = "backup" + id + ".txt"
 
 	var GState DataStructures.GlobalState
 	//Init state, use backup if backup file available

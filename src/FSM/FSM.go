@@ -34,9 +34,9 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 					if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
 						elevio.SetDoorOpenLamp(true)
 						doorTimerDone = time.NewTimer(3 * time.Second)
-						elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
-						elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
-						elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+						elev.Queue[elev.Floor][DataStructures.HallUp] = false
+						elev.Queue[elev.Floor][DataStructures.HallDown] = false
+						elev.Queue[elev.Floor][DataStructures.Cab] = false
 						elev.State = DataStructures.DoorOpen
 						chFSM.UpdateFromFSM <- elev
 					} else { //No orders in queue
@@ -48,9 +48,9 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 				if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
 					elevio.SetDoorOpenLamp(true)
 					doorTimerDone = time.NewTimer(3 * time.Second)
-					elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
-					elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
-					elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+					elev.Queue[elev.Floor][DataStructures.HallUp] = false
+					elev.Queue[elev.Floor][DataStructures.HallDown] = false
+					elev.Queue[elev.Floor][DataStructures.Cab] = false
 					elev.State = DataStructures.DoorOpen
 				}
 			}
@@ -69,9 +69,9 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 					elevio.SetMotorDirection(DataStructures.MotorDirStop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimerDone = time.NewTimer(3 * time.Second)
-					elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
-					elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
-					elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+					elev.Queue[elev.Floor][DataStructures.HallUp] = false
+					elev.Queue[elev.Floor][DataStructures.HallDown] = false
+					elev.Queue[elev.Floor][DataStructures.Cab] = false
 					elev.State = DataStructures.DoorOpen
 				}
 			}

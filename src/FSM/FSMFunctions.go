@@ -4,29 +4,29 @@ import (
 	"../DataStructures"
 )
 
-func GetNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
+func getNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 
 	if elev.Dir == DataStructures.MotorDirStop {
 
-		if OrderAbove(elev) {
+		if orderAbove(elev) {
 			return DataStructures.MotorDirUp
-		} else if OrderBelow(elev) {
+		} else if orderBelow(elev) {
 			return DataStructures.MotorDirDown
 		} else {
 			return DataStructures.MotorDirStop
 		}
 	} else if elev.Dir == DataStructures.MotorDirUp {
-		if OrderAbove(elev) {
+		if orderAbove(elev) {
 			return DataStructures.MotorDirUp
-		} else if OrderBelow(elev) {
+		} else if orderBelow(elev) {
 			return DataStructures.MotorDirDown
 		} else {
 			return DataStructures.MotorDirStop
 		}
 	} else {
-		if OrderBelow(elev) {
+		if orderBelow(elev) {
 			return DataStructures.MotorDirDown
-		} else if OrderAbove(elev) {
+		} else if orderAbove(elev) {
 			return DataStructures.MotorDirUp
 		} else {
 			return DataStructures.MotorDirStop
@@ -35,7 +35,7 @@ func GetNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 	return DataStructures.MotorDirStop
 }
 
-func OrderAbove(elev DataStructures.Elev) bool {
+func orderAbove(elev DataStructures.Elev) bool {
 	for floor := elev.Floor + 1; floor < DataStructures.NumFloors; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -46,7 +46,7 @@ func OrderAbove(elev DataStructures.Elev) bool {
 	return false
 }
 
-func OrderBelow(elev DataStructures.Elev) bool {
+func orderBelow(elev DataStructures.Elev) bool {
 	for floor := 0; floor < elev.Floor; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -57,17 +57,37 @@ func OrderBelow(elev DataStructures.Elev) bool {
 	return false
 }
 
-func ShouldStop(elev DataStructures.Elev) bool {
+func shouldStop(elev DataStructures.Elev) bool {
 	switch elev.Dir {
 	case DataStructures.MotorDirUp:
-		return (elev.Queue[elev.Floor][DataStructures.BT_HallUp] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderAbove(elev))
+		return (elev.Queue[elev.Floor][DataStructures.HallUp] || elev.Queue[elev.Floor][DataStructures.Cab] || !orderAbove(elev))
 
 	case DataStructures.MotorDirDown:
-		return (elev.Queue[elev.Floor][DataStructures.BT_HallDown] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderBelow(elev))
+		return (elev.Queue[elev.Floor][DataStructures.HallDown] || elev.Queue[elev.Floor][DataStructures.Cab] || !orderBelow(elev))
 
 	case DataStructures.MotorDirStop:
 
 	default:
 	}
 	return false
+}
+
+func SetHallAndCabLights(GState DataStructures.GlobalState, elev DataStructures.Elev, id string) {
+	for floor := 0; floor < DataStructures.NumFloors; floor++ {
+		if elev.Queue[floor][2] {
+			elevio.SetButtonLamp(DataStructures.Cab, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.Cab, floor, false)
+		}
+		if GState.HallRequests[floor][0] {
+			elevio.SetButtonLamp(DataStructures.HallUp, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.HallUp, floor, false)
+		}
+		if GState.HallRequests[floor][1] {
+			elevio.SetButtonLamp(DataStructures.HallDown, floor, true)
+		} else {
+			elevio.SetButtonLamp(DataStructures.HallDown, floor, false)
+		}
+	}
 }

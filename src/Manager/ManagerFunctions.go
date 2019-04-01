@@ -4,18 +4,16 @@ package Manager
 import (
 	"../DataStructures"
 	"../FSM"
-	"../elevio"
 	"fmt"
 	"io/ioutil"
-	"encoding/json"
 	"os"
 	"sort"
 	"strconv"
 )
 
-func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+func managerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
 	DataStructures.HasBackup = false
-	var _, err1 = os.Stat(DataStructures.Backupfilename)
+	var _, err1 = os.Stat(DataStructures.BackupFilename)
 
 	if os.IsNotExist(err1) {
 
@@ -28,15 +26,17 @@ func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.Gl
 		GState.Map[GState.Id] = ElevState
 
 		// Create backupfile
-		var file, err1 = os.Create(DataStructures.Backupfilename)
+		var file, err1 = os.Create(DataStructures.BackupFilename)
 		isError(err1)
 		defer file.Close()
 		GStatejason, _ := json.MarshalIndent(GState, "", "")
-		_ = ioutil.WriteFile(DataStructures.Backupfilename, GStatejason, 0644)
+		_ = ioutil.WriteFile(DataStructures.BackupFilename, GStatejason, 0644)
 		return GState
 	} else {
 		DataStructures.HasBackup = true
-		GStateByte, err := ioutil.ReadFile(DataStructures.Backupfilename)
+
+		//Read backup into GlobalState
+		GStateByte, err := ioutil.ReadFile(DataStructures.BackupFilename)
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -44,6 +44,8 @@ func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.Gl
 		if error != nil {
 			fmt.Println("error:", error)
 		}
+
+		//Set the state to Unknown
 		GState.Map[GState.Id] = DataStructures.Elev{DataStructures.Unknown, DataStructures.MotorDirUp, 0, GState.Map[GState.Id].Queue}
 		return GState
 	}
@@ -91,7 +93,7 @@ func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.Butto
 
 	switch tempElevator.State {
 	case DataStructures.Idle:
-		tempElevator.Dir = FSM.GetNextDir(tempElevator)
+		tempElevator.Dir = FSM.getNextDir(tempElevator)
 		if tempElevator.Dir == DataStructures.MotorDirStop {
 			return timeUsed
 		}
@@ -103,19 +105,19 @@ func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.Butto
 	}
 	count := 0
 	for {
-		if FSM.ShouldStop(tempElevator) {
+		if FSM.shouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
 				return timeUsed
 			}
-			tempElevator.Queue[tempElevator.Floor][DataStructures.BT_Cab] = false
-			if tempElevator.Dir == DataStructures.MotorDirUp || !FSM.OrderAbove(tempElevator) {
-				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallUp] = false
+			tempElevator.Queue[tempElevator.Floor][DataStructures.Cab] = false
+			if tempElevator.Dir == DataStructures.MotorDirUp || !FSM.orderAbove(tempElevator) {
+				tempElevator.Queue[tempElevator.Floor][DataStructures.HallUp] = false
 			}
-			if tempElevator.Dir == DataStructures.MotorDirDown || !FSM.OrderBelow(tempElevator) {
-				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallDown] = false
+			if tempElevator.Dir == DataStructures.MotorDirDown || !FSM.orderBelow(tempElevator) {
+				tempElevator.Queue[tempElevator.Floor][DataStructures.HallDown] = false
 			}
 			timeUsed += DataStructures.DoorOpenTime
-			tempElevator.Dir = FSM.GetNextDir(tempElevator)
+			tempElevator.Dir = FSM.getNextDir(tempElevator)
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime
