@@ -50,7 +50,7 @@ func isError(err error) bool {
 	return (err != nil)
 }
 
-func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string {
+func chooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string {
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
 	keyBestElevator := GState.Id

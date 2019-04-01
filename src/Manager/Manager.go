@@ -45,7 +45,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 		chMan.InternalState <- GState
 
 		if distribute {
-			keyBestElevator := ChooseElevator(GState.Map, hallOrder, GState)
+			keyBestElevator := chooseElevator(GState.Map, hallOrder, GState)
 			if keyBestElevator == GState.Id {
 				var x = GState.Map[GState.Id]
 				x.Queue[hallOrder.Floor][hallOrder.Button] = true
@@ -80,7 +80,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 					if Update.HallRequests[floor][button] && !GState.HallRequests[floor][button] {
 						GState.HallRequests[floor][button] = true
 						newOrder = DataStructures.ButtonEvent{floor, DataStructures.ButtonType(button)}
-						keyBestElevator := ChooseElevator(GState.Map, newOrder, GState)
+						keyBestElevator := chooseElevator(GState.Map, newOrder, GState)
 						if keyBestElevator == GState.Id {
 							var x = GState.Map[GState.Id]
 							x.Queue[newOrder.Floor][newOrder.Button] = true
@@ -101,7 +101,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if lostElev.Queue[floor][button] {
 						newOrder = DataStructures.ButtonEvent{floor, DataStructures.ButtonType(button)}
-						keyBestElevator := ChooseElevator(GState.Map, newOrder, GState)
+						keyBestElevator := chooseElevator(GState.Map, newOrder, GState)
 						if keyBestElevator == GState.Id {
 							var x = GState.Map[GState.Id]
 							x.Queue[newOrder.Floor][newOrder.Button] = true
