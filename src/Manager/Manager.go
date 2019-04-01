@@ -2,10 +2,8 @@ package Manager
 
 import (
 	"../DataStructures"
-	"../FSM"
 	"../network/bcast"
-	"encoding/json"
-	"fmt"
+		"encoding/json"
 	"io/ioutil"
 	"os"
 	"time"
@@ -53,7 +51,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 				var x = GState.Map[GState.Id]
 				x.Queue[hallOrder.Floor][hallOrder.Button] = true
 				GState.Map[GState.Id] = x
-				FSMchan.UpdateFromManager <- GState
+				chFSM.UpdateFromManager <- GState
 			}
 			newOrders = false
 		}
@@ -61,10 +59,10 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 		//After initialization with backup, make sure FSM take the old orders
 		if DataStructures.HasBackup {
 			DataStructures.HasBackup = false
-			go func(FSMchan DataStructures.FSMChannels) {
+			go func(chFSM DataStructures.FSMChannels) {
 				time.Sleep(3 * time.Second)
-				FSMchan.UpdateFromManager <- GState
-			}(FSMchan)
+				chFSM.UpdateFromManager <- GState
+			}(chFSM)
 		}
 
 		select {
@@ -91,7 +89,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 							var x = GState.Map[GState.Id]
 							x.Queue[newOrder.Floor][newOrder.Button] = true
 							GState.Map[GState.Id] = x
-							FSMchan.UpdateFromManager <- GState
+							chFSM.UpdateFromManager <- GState
 						}
 					}
 				}
@@ -113,7 +111,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 							var x = GState.Map[GState.Id]
 							x.Queue[newOrder.Floor][newOrder.Button] = true
 							GState.Map[GState.Id] = x
-							FSMchan.UpdateFromManager <- GState
+							chFSM.UpdateFromManager <- GState
 						}
 					}
 				}
@@ -123,13 +121,13 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 			GState.HallRequests[hallOrder.Floor][hallOrder.Button] = true
 			newOrders = true
 
-		case cabOrderFloor := <-FSMchan.AddCabOrderManager:
+		case cabOrderFloor := <-chFSM.AddCabOrderManager:
 			var x = GState.Map[GState.Id]
 			x.Queue[cabOrderFloor][2] = true
 			GState.Map[GState.Id] = x
-			FSMchan.UpdateFromManager <- GState
+			chFSM.UpdateFromManager <- GState
 
-		case update := <-FSMchan.UpdateFromFSM:
+		case update := <-chFSM.UpdateFromFSM:
 			tempQueue := GState.Map[GState.Id].Queue
 			GState.Map[GState.Id] = update
 			var x = GState.Map[GState.Id]
@@ -160,7 +158,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 					}
 				}
 			}
-			FSMchan.UpdateFromManager <- GState
+			chFSM.UpdateFromManager <- GState
 		}
 	}
 }

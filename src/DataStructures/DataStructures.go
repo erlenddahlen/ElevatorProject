@@ -62,7 +62,7 @@ type ButtonEvent struct {
 type FSMChannels struct {
 	AtFloor            chan int
 	UpdateFromFSM      chan Elev
-	UpdateFromManger   chan GlobalState
+	UpdateFromManager   chan GlobalState
 	ButtonPushed       chan ButtonEvent
 	AddCabOrder        chan int
 	AddCabOrderManager chan int
