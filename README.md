@@ -10,15 +10,6 @@ This code is specifically made for three elevators and four floors.
 
 Module descriptions
 ---------------------
-Modules:
-- FSM
-- Manager
-- Network
-
-Extra packages:
-- Elevio
-- DataStructures
-
 ###  FSM
 
 The FSM module is the Finite State Machine for controlling one elevator. It consists of four states and three main events:
@@ -52,8 +43,20 @@ Since it has all the information about everything in the system it also has the 
 (#4) Happens in the functions UpdateNetworkPeers and MotorstopWatchdog
 
 ###  Network
+The Network module enables communication over the network through UDP broadcasting. The module is used directly from the project resources. Follow the link for more information on its features.
+[GitHub: Network Go](https://github.com/TTK4145/Network-go)
+
 
 ###  Extra packages
+#### Elevio
+Handles the hardware of the system. Initializing hardware, handling motor, buttons, lights, floor sensor etc.
+
+
+#### DataStructures
+Defining constants and types of structs.
 
 Error handling functionality
 ---------------------------
+- spamming
+- watchdog
+- backlog
