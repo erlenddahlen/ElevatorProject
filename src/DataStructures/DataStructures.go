@@ -66,7 +66,7 @@ type ButtonEvent struct {
 }
 
 type FSMChannels struct {
-	CurrentFloor     chan int
+	AtFloor     chan int
 	LocalStateUpdate chan Elev
 	PingFromGov      chan GlobalState
 	ButtonPushed     chan ButtonEvent
