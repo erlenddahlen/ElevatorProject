@@ -1,5 +1,0 @@
-package SlaveTest
-
-func FSM()  {
-  
-}
