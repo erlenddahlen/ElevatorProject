@@ -1,141 +1,104 @@
 package FSM
 
 import (
-	"fmt"
 	"time"
 	"../DataStructures"
 	"../elevio"
 )
 
-func handleIo(chGov DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels) {
-	go elevio.PollButtons(chFSM.ButtonPushed)
-	go elevio.PollFloorSensor(chFSM.CurrentFloor)
-	for {
-		select {
-		case button := <-chFSM.ButtonPushed:
-			fmt.Println("Button pushed: ", button)
-			if button.Button < 2 {
-				chGov.AddHallOrder <- button
-				//fmt.Println("sent hall to Gov")
-			} else {
-				//chFSM.AddCabOrder <- button.Floor
-				chFSM.AddCabOrderGov <- button.Floor
-				//fmt.Println("sent cab to Gov")
-			}
-		}
-	}
-
-}
-
-
-func FSM(chGov DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
-
-	// Init doorTimer, MotorDirection and peer
+func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels, id string, GState DataStructures.GlobalState) {
 	doorTimerDone := time.NewTimer(0)
 	doorTimerDone.Stop()
-	go handleIo(chGov, chFSM)
 
-	elevio.SetMotorDirection(GState.Map[id].Dir)
-	peer := GState.Map[id]
+	elev := GState.Map[id]
+	elevio.SetMotorDirection(elev.Dir)
+
+	go handleIo(chMan, chFSM)
 
 	for {
+		chFSM.LocalStateUpdate <- elev
 
-		chFSM.LocalStateUpdate <- peer
-		//fmt.Println("Queue in FSM: ", peer.Queue)
-		// fmt.Println("STATE: ", peer.State, "DIR: ", peer.Dir, "FLOOR: ", peer.Floor)
-		//fmt.Println("QUEUE in FSM: ", peer.Queue)
-		//Lights(GState, peer, id)
 		select {
-		// case cabOrderFloor:= <- chFSM.AddCabOrder:
-		//     peer.Queue[cabOrderFloor][2] = true
-		//
-
 		case update := <-chFSM.PingFromGov:
-			peer.Queue = update.Map[id].Queue
-			//Lights(update, peer, id)
-			//fmt.Println("CASE A")
-			switch peer.State {
-			case DataStructures.Idle:
-				peer.Dir = GetNextDir(peer)
+			elev.Queue = update.Map[id].Queue
 
-				//fmt.Println("Next dir: ", peer.Dir)
-				elevio.SetMotorDirection(peer.Dir)
-				if peer.Dir != DataStructures.MD_Stop {
-					peer.State = DataStructures.Moving
-					//c.LocalStateUpdate <- peer
-				} else {
-					if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2] {
+			switch elev.State {
+				case DataStructures.Idle:
+					elev.Dir = GetNextDir(elev)
+					elevio.SetMotorDirection(elev.Dir)
+
+					if elev.Dir != DataStructures.MD_Stop {
+						elev.State = DataStructures.Moving
+					} else {
+						if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
+							elevio.SetDoorOpenLamp(true)
+							doorTimerDone = time.NewTimer(3 * time.Second)
+							elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
+							elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
+							elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+							elev.State = DataStructures.DoorOpen
+							chFSM.LocalStateUpdate <- elev
+						} else {
+							elev.State = DataStructures.Idle
+						}
+					}
+
+				case DataStructures.DoorOpen:
+					if elev.Queue[elev.Floor][0] || elev.Queue[elev.Floor][1] || elev.Queue[elev.Floor][2] {
 						elevio.SetDoorOpenLamp(true)
 						doorTimerDone = time.NewTimer(3 * time.Second)
-						// Slette ordre fra queue
-						peer.Queue[peer.Floor][DataStructures.BT_HallUp] = false
-						peer.Queue[peer.Floor][DataStructures.BT_HallDown] = false
-						peer.Queue[peer.Floor][DataStructures.BT_Cab] = false
-						peer.State = DataStructures.DoorOpen
-						//c.LocalStateUpdate <- peer
-						chFSM.LocalStateUpdate <- peer
-					} else {
-						peer.State = DataStructures.Idle
+						elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
+						elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
+						elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+						elev.State = DataStructures.DoorOpen
 					}
 				}
-			case DataStructures.Moving:
-			case DataStructures.DoorOpen:
-				if peer.Queue[peer.Floor][0] || peer.Queue[peer.Floor][1] || peer.Queue[peer.Floor][2] {
-					elevio.SetDoorOpenLamp(true)
-					doorTimerDone = time.NewTimer(3 * time.Second)
-					// Slette ordre fra queue
-					peer.Queue[peer.Floor][DataStructures.BT_HallUp] = false
-					peer.Queue[peer.Floor][DataStructures.BT_HallDown] = false
-					peer.Queue[peer.Floor][DataStructures.BT_Cab] = false
 
-					peer.State = DataStructures.DoorOpen
-					//c.LocalStateUpdate <- peer
-				}
-			}
-
-		case currentFloor := <-chFSM.CurrentFloor:
-			//fmt.Println("CASE B")
-			peer.Floor = currentFloor
+		case currentFloor := <-chFSM.AtFloor:
+			elev.Floor = currentFloor
 			elevio.SetFloorIndicator(currentFloor)
-			switch peer.State {
-			case DataStructures.Unknown:
-				//fmt.Println("case Unknown")
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				peer.State = DataStructures.Idle
 
-				//fmt.Println("State i unknown: ", peer.State)
+			switch elev.State {
+			case DataStructures.Unknown:
+				elevio.SetMotorDirection(elevio.MD_Stop)
+				elev.State = DataStructures.Idle
+
 			case DataStructures.Moving:
-				if ShouldStop(peer) {
+				if ShouldStop(elev) {
 					elevio.SetMotorDirection(DataStructures.MD_Stop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimerDone = time.NewTimer(3 * time.Second)
-					// Slette ordre fra queue
-					peer.Queue[peer.Floor][DataStructures.BT_HallUp] = false
-					peer.Queue[peer.Floor][DataStructures.BT_HallDown] = false
-					peer.Queue[peer.Floor][DataStructures.BT_Cab] = false
-					peer.State = DataStructures.DoorOpen
+					elev.Queue[elev.Floor][DataStructures.BT_HallUp] = false
+					elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
+					elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
+					elev.State = DataStructures.DoorOpen
 				}
-				//c.LocalStateUpdate <- peer
 			}
 
-			//else if floor == 0 {
-			//elevio.SetMotorDirection(elevio.MD_Up)
-			//} else if floor == 4 {
-			//elevio.SetMotorDirection(elevio.MD_Down)
-			//}
 		case <-doorTimerDone.C:
-			//fmt.Println("CASE C")
 			elevio.SetDoorOpenLamp(false)
-			peer.Dir = GetNextDir(peer)
-			elevio.SetMotorDirection(peer.Dir)
-			//fmt.Println("Doortimer done found next dir: ", peer.Dir)
-			if peer.Dir != DataStructures.MD_Stop {
-				peer.State = DataStructures.Moving
+			elev.Dir = GetNextDir(elev)
+			elevio.SetMotorDirection(elev.Dir)
+			if elev.Dir != DataStructures.MD_Stop {
+				elev.State = DataStructures.Moving
 			} else {
-				peer.State = DataStructures.Idle
+				elev.State = DataStructures.Idle
 			}
-			//c.LocalStateUpdate <- peer
 		}
 	}
+}
 
+func handleIo(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels) {
+	go elevio.PollButtons(chFSM.ButtonPushed)
+	go elevio.PollFloorSensor(chFSM.AtFloor)
+	for {
+		select {
+		case button := <-chFSM.ButtonPushed:
+			if button.Button < 2 {
+				chMan.AddHallOrder <- button
+			} else {
+				chFSM.AddCabOrderGov <- button.Floor
+			}
+		}
+	}
 }

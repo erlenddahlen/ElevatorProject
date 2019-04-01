@@ -24,7 +24,9 @@ func main() {
 	DataStructures.Backupfilename = "backup" + id + ".txt"
 
 	var GState DataStructures.GlobalState
+	//Init state, use backup if backup file available
 	GState = Manager.ManagerInit(GState, id)
+
 
 	PeerFSMChannels := DataStructures.FSMChannels{
 		CurrentFloor:     make(chan int),

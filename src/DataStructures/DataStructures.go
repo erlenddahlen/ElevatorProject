@@ -2,12 +2,12 @@ package DataStructures
 
 // Scaleable declaration of #floors and #elevators
 const (
-	NumFloors = 4
-	NumButtons     = 3
-	Timeout        = 5
+	NumFloors 		= 4
+	NumButtons    = 3
+	Timeout       = 5
 	TravelTime    = 5
-	DoorOpenTime = 3
-	NumOfElev      = 3
+	DoorOpenTime 	= 3
+	NumOfElev     = 3
 )
 
 // Name of backupfile
@@ -17,10 +17,10 @@ var HasBackup bool
 type ElevState int
 
 const (
-	Unknown   ElevState = iota - 1
-	Idle                = 0
-	DoorOpen           = 1
-	Moving              = 2
+	Unknown	ElevState = iota - 1
+	Idle              = 0
+	DoorOpen          = 1
+	Moving            = 2
 )
 
 type Direction int
@@ -66,7 +66,7 @@ type ButtonEvent struct {
 }
 
 type FSMChannels struct {
-	CurrentFloor     chan int
+	AtFloor     chan int
 	LocalStateUpdate chan Elev
 	PingFromGov      chan GlobalState
 	ButtonPushed     chan ButtonEvent
