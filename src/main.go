@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"./DataStructures"
+	"./FSM"
 	"./Manager"
-	"./PeerFSM"
 	"./elevio"
 )
 

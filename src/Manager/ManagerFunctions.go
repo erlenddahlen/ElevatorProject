@@ -1,13 +1,14 @@
-FSMpackage Manager
+package Manager
+
 //
 import (
 	"../DataStructures"
 	"../FSM"
-	 "strconv"
-	 "fmt"
-	 "sort"
-	 "io/ioutil"
-	 "os"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"sort"
+	"strconv"
 )
 
 func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
@@ -49,8 +50,7 @@ func isError(err error) bool {
 	return (err != nil)
 }
 
-
-func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string{
+func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string {
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
 	keyBestElevator := GState.Id
@@ -58,23 +58,23 @@ func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStruc
 	i := 0
 	keys := make([]int, 0)
 	for key, _ := range elevators {
-			keyInt, error := strconv.Atoi(key)
-			if error != nil {
-					fmt.Println(error.Error())
+		keyInt, error := strconv.Atoi(key)
+		if error != nil {
+			fmt.Println(error.Error())
 		}
 		keys = append(keys, keyInt)
 	}
 	sort.Ints(keys)
-	for _,v:= range keys{
-		keyString:= strconv.Itoa(v)
+	for _, v := range keys {
+		keyString := strconv.Itoa(v)
 		times[i] = TimeToServeOrder(elevators[keyString], NewOrder)
-		if times[i] <= times[indexBestElevator]{
+		if times[i] <= times[indexBestElevator] {
 			indexBestElevator = i
 			keyBestElevator = keyString
-			}
+		}
 		i++
 	}
-    return keyBestElevator
+	return keyBestElevator
 }
 
 func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) int {
@@ -95,7 +95,7 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	case DataStructures.DoorOpen:
 		timeUsed += DataStructures.DoorOpenTime / 2
 	}
-    count := 0
+	count := 0
 	for {
 		if FSM.shouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
@@ -113,7 +113,7 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime
-        count = count + 1
+		count = count + 1
 	}
 }
 
