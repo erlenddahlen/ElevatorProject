@@ -1,6 +1,49 @@
 Elevator Project
 ================
 
+Modules:
+-------
+The system consists of three modules and two helping packages, which all serves specific tasks to accomplish the main goal of creating software for controlling `n` elevators working in parallel across `m` floors.
+
+This code is specifically made for three elevators and four floors.
+
+Modules:
+- FSM
+- Manager
+- Network
+
+Extra packages:
+- elevio
+- DataStructures
+
+FSM
+-------
+The FSM module is the Finite State Machine for controlling one elevator. It consists four states and three main events
+
+State| Event
+------------ | -------------
+Unknown| Initial
+Idle| Update of Global State from Manager
+DoorOpen| At a floor
+Moving| Door timer finished
+
+
+
+The elevator starts at state Unknown before it finds out which floor it is located, then it returns to state Idle. From Idle it will wait for the event of an update from Manager, update its queue and search it to find which order it shall execute (#1). It finds its direction and goes to state Moving. When the elevator arrives at a floor this event triggers it to check if it should stop(#1). If the elevator is in the floor of the order it is executing it will stop and start a door timer of 3 sec. The elevator goes to DoorOpen state, and waits for the timer to finish. After finishing timer, the elevator goes back to Idle again and waits for a new update from Manager. Through this whole process the elevator sends updates to the Manager of its state, floor, direction and queue.
+
+The FSM module also have a GO routine for checking if buttons are pushed and if the elevator arrives at a new floor.
+
+(#1) The functions in FSMFunctions.go handles these operations.
+
+Manager
+-------
+
+
+
+
+Network
+-------
+
 
 Summary
 -------
