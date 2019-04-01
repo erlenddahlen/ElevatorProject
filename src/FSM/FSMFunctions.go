@@ -2,31 +2,32 @@ package FSM
 
 import (
 	"../DataStructures"
+	"../elevio"
 )
 
-func getNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
+func GetNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 
 	if elev.Dir == DataStructures.MotorDirStop {
 
-		if orderAbove(elev) {
+		if OrderAbove(elev) {
 			return DataStructures.MotorDirUp
-		} else if orderBelow(elev) {
+		} else if OrderBelow(elev) {
 			return DataStructures.MotorDirDown
 		} else {
 			return DataStructures.MotorDirStop
 		}
 	} else if elev.Dir == DataStructures.MotorDirUp {
-		if orderAbove(elev) {
+		if OrderAbove(elev) {
 			return DataStructures.MotorDirUp
-		} else if orderBelow(elev) {
+		} else if OrderBelow(elev) {
 			return DataStructures.MotorDirDown
 		} else {
 			return DataStructures.MotorDirStop
 		}
 	} else {
-		if orderBelow(elev) {
+		if OrderBelow(elev) {
 			return DataStructures.MotorDirDown
-		} else if orderAbove(elev) {
+		} else if OrderAbove(elev) {
 			return DataStructures.MotorDirUp
 		} else {
 			return DataStructures.MotorDirStop
@@ -35,7 +36,7 @@ func getNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 	return DataStructures.MotorDirStop
 }
 
-func orderAbove(elev DataStructures.Elev) bool {
+func OrderAbove(elev DataStructures.Elev) bool {
 	for floor := elev.Floor + 1; floor < DataStructures.NumFloors; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -46,7 +47,7 @@ func orderAbove(elev DataStructures.Elev) bool {
 	return false
 }
 
-func orderBelow(elev DataStructures.Elev) bool {
+func OrderBelow(elev DataStructures.Elev) bool {
 	for floor := 0; floor < elev.Floor; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
 			if elev.Queue[floor][button] {
@@ -57,13 +58,13 @@ func orderBelow(elev DataStructures.Elev) bool {
 	return false
 }
 
-func shouldStop(elev DataStructures.Elev) bool {
+func ShouldStop(elev DataStructures.Elev) bool {
 	switch elev.Dir {
 	case DataStructures.MotorDirUp:
-		return (elev.Queue[elev.Floor][DataStructures.HallUp] || elev.Queue[elev.Floor][DataStructures.Cab] || !orderAbove(elev))
+		return (elev.Queue[elev.Floor][DataStructures.HallUp] || elev.Queue[elev.Floor][DataStructures.Cab] || !OrderAbove(elev))
 
 	case DataStructures.MotorDirDown:
-		return (elev.Queue[elev.Floor][DataStructures.HallDown] || elev.Queue[elev.Floor][DataStructures.Cab] || !orderBelow(elev))
+		return (elev.Queue[elev.Floor][DataStructures.HallDown] || elev.Queue[elev.Floor][DataStructures.Cab] || !OrderBelow(elev))
 
 	case DataStructures.MotorDirStop:
 

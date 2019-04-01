@@ -4,6 +4,7 @@ package Manager
 import (
 	"../DataStructures"
 	"../FSM"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"strconv"
 )
 
-func managerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
 	DataStructures.HasBackup = false
 	var _, err1 = os.Stat(DataStructures.BackupFilename)
 
@@ -93,7 +94,7 @@ func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.Butto
 
 	switch tempElevator.State {
 	case DataStructures.Idle:
-		tempElevator.Dir = FSM.getNextDir(tempElevator)
+		tempElevator.Dir = FSM.GetNextDir(tempElevator)
 		if tempElevator.Dir == DataStructures.MotorDirStop {
 			return timeUsed
 		}
@@ -105,19 +106,19 @@ func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.Butto
 	}
 	count := 0
 	for {
-		if FSM.shouldStop(tempElevator) {
+		if FSM.ShouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
 				return timeUsed
 			}
 			tempElevator.Queue[tempElevator.Floor][DataStructures.Cab] = false
-			if tempElevator.Dir == DataStructures.MotorDirUp || !FSM.orderAbove(tempElevator) {
+			if tempElevator.Dir == DataStructures.MotorDirUp || !FSM.OrderAbove(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.HallUp] = false
 			}
-			if tempElevator.Dir == DataStructures.MotorDirDown || !FSM.orderBelow(tempElevator) {
+			if tempElevator.Dir == DataStructures.MotorDirDown || !FSM.OrderBelow(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.HallDown] = false
 			}
 			timeUsed += DataStructures.DoorOpenTime
-			tempElevator.Dir = FSM.getNextDir(tempElevator)
+			tempElevator.Dir = FSM.GetNextDir(tempElevator)
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime
