@@ -67,11 +67,11 @@ type ButtonEvent struct {
 
 type FSMChannels struct {
 	AtFloor     chan int
-	LocalStateUpdate chan Elev
-	PingFromGov      chan GlobalState
+	UpdateFromFSM chan Elev
+	UpdateFromManger      chan GlobalState
 	ButtonPushed     chan ButtonEvent
 	AddCabOrder      chan int
-	AddCabOrderGov   chan int
+	AddCabOrderManager   chan int
 }
 
 type ManagerChannels struct { //decalred in config file

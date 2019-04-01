@@ -16,10 +16,10 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 	go handleIo(chMan, chFSM)
 
 	for {
-		chFSM.LocalStateUpdate <- elev
+		chFSM.UpdateFromFSM <- elev
 
 		select {
-		case update := <-chFSM.PingFromGov:
+		case update := <-chFSM.UpdateFromManger:
 			elev.Queue = update.Map[id].Queue
 
 			switch elev.State {
@@ -37,7 +37,7 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 							elev.Queue[elev.Floor][DataStructures.BT_HallDown] = false
 							elev.Queue[elev.Floor][DataStructures.BT_Cab] = false
 							elev.State = DataStructures.DoorOpen
-							chFSM.LocalStateUpdate <- elev
+							chFSM.UpdateFromFSM <- elev
 						} else {
 							elev.State = DataStructures.Idle
 						}
@@ -97,7 +97,7 @@ func handleIo(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChan
 			if button.Button < 2 {
 				chMan.AddHallOrder <- button
 			} else {
-				chFSM.AddCabOrderGov <- button.Floor
+				chFSM.AddCabOrderManager <- button.Floor
 			}
 		}
 	}

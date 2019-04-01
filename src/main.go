@@ -28,12 +28,13 @@ func main() {
 	GState = Manager.ManagerInit(GState, id)
 
 
-	PeerFSMChannels := DataStructures.FSMChannels{
-		CurrentFloor:     make(chan int),
-		LocalStateUpdate: make(chan DataStructures.Elev, 10),
-		PingFromGov:      make(chan DataStructures.GlobalState),
+	FSMChannels := DataStructures.FSMChannels{
+		AtFloor:     make(chan int),
+		UpdateFromFSM: make(chan DataStructures.Elev, 10),
+		UpdateFromManger:      make(chan DataStructures.GlobalState),
 		ButtonPushed:     make(chan DataStructures.ButtonEvent),
-		AddCabOrderGov: 	make(chan int),
+		AddCabOrder:		make(chan int),
+		AddCabOrderManager: 	make(chan int),
 	}
 
 	ManagerChannels := DataStructures.ManagerChannels{
@@ -45,11 +46,11 @@ func main() {
 		Watchdog:					make(chan int),
 	}
 
-	go Manager.UpdateGlobalState(ManagerChannels, PeerFSMChannels, id, GState)
+	go Manager.UpdateGlobalState(ManagerChannels, FSMChannels, id, GState)
 	go Manager.SpamGlobalState(ManagerChannels)
 	go Manager.NetworkState(ManagerChannels)
 	go Manager.Watchdog(ManagerChannels, GState)
-	go PeerFSM.FSM(ManagerChannels, PeerFSMChannels, id, GState)
+	go FSM.FSM(ManagerChannels, FSMChannels, id, GState)
 
 	for {
 		//Run elevator

@@ -1,4 +1,4 @@
-package Manager
+FSMpackage Manager
 //
 import (
 	"../DataStructures"
@@ -13,7 +13,7 @@ import (
 func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
 	DataStructures.HasBackup = false
 	var _, err1 = os.Stat(DataStructures.Backupfilename)
-	
+
 	if os.IsNotExist(err1) {
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
 		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, Queue1}
@@ -85,7 +85,7 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 
 	switch tempElevator.State {
 	case DataStructures.Idle:
-		tempElevator.Dir = PeerFSM.GetNextDir(tempElevator)
+		tempElevator.Dir = FSM.GetNextDir(tempElevator)
 		if tempElevator.Dir == DataStructures.MD_Stop {
 			return timeUsed
 		}
@@ -97,19 +97,19 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	}
     count := 0
 	for {
-		if PeerFSM.ShouldStop(tempElevator) {
+		if FSM.ShouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
 				return timeUsed
 			}
 			tempElevator.Queue[tempElevator.Floor][DataStructures.BT_Cab] = false
-			if tempElevator.Dir == DataStructures.MD_Up || !PeerFSM.OrderAbove(tempElevator) {
+			if tempElevator.Dir == DataStructures.MD_Up || !FSM.OrderAbove(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallUp] = false
 			}
-			if tempElevator.Dir == DataStructures.MD_Down || !PeerFSM.OrderBelow(tempElevator) {
+			if tempElevator.Dir == DataStructures.MD_Down || !FSM.OrderBelow(tempElevator) {
 				tempElevator.Queue[tempElevator.Floor][DataStructures.BT_HallDown] = false
 			}
 			timeUsed += DataStructures.DoorOpenTime
-			tempElevator.Dir = PeerFSM.GetNextDir(tempElevator)
+			tempElevator.Dir = FSM.GetNextDir(tempElevator)
 		}
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime
@@ -117,9 +117,9 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	}
 }
 
-func Lights(GState DataStructures.GlobalState, peer DataStructures.Elev, id string) {
+func Lights(GState DataStructures.GlobalState, elev DataStructures.Elev, id string) {
 	for floor := 0; floor < DataStructures.NumFloors; floor++ {
-		if peer.Queue[floor][2] {
+		if elev.Queue[floor][2] {
 			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, true)
 		} else {
 			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, false)

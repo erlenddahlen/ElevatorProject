@@ -21,7 +21,7 @@ func SpamGlobalState(chMan DataStructures.ManagerChannels) {
 
 	for {
 		select {
-		case <-ticker: 
+		case <-ticker:
 			transmitNet <- latestState
 
 		case newUpdate := <-chMan.InternalState:
@@ -217,10 +217,9 @@ func Watchdog(chMan DataStructures.ManagerChannels, GState DataStructures.Global
 					watchdogTimer = time.NewTimer(6 * time.Second)
 			}
 			prevState = newState
-			
+
 		case <- watchdogTimer.C:
 			chMan.Watchdog <- 1
 		}
 	}
 }
-
