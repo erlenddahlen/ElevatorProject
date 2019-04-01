@@ -7,6 +7,8 @@ In addition, the system also have functionality to handle error. This includes s
 
 This code is specifically made for three elevators and four floors.
 
+![System architecture](ElevatorSystem.png)
+Format: ![Alt Text](url)
 
 Module descriptions
 ---------------------
@@ -53,7 +55,7 @@ Handles the hardware of the system. Initializing hardware, handling motor, butto
 
 
 #### DataStructures
-Defining constants and types of structs. Own file to avoid circular dependencies. 
+Defining constants and types of structs. Own file to avoid circular dependencies.
 
 Error handling functionality
 ---------------------------
