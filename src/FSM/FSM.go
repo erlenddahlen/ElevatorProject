@@ -19,12 +19,12 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 		chFSM.UpdateFromFSM <- elev
 
 		select {
-		case update := <-chFSM.UpdateFromManger:
+		case update := <-chFSM.UpdateFromManager:
 			elev.Queue = update.Map[id].Queue
 
 			switch elev.State {
 			case DataStructures.Idle:
-				elev.Dir = getNextDir(elev)
+				elev.Dir = GetNextDir(elev)
 				elevio.SetMotorDirection(elev.Dir)
 
 				if elev.Dir != DataStructures.MotorDirStop {
@@ -60,11 +60,11 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 
 			switch elev.State {
 			case DataStructures.Unknown:
-				elevio.SetMotorDirection(elevio.MotorDirStop)
+				elevio.SetMotorDirection(DataStructures.MotorDirStop)
 				elev.State = DataStructures.Idle
 
 			case DataStructures.Moving:
-				if shouldStop(elev) {
+				if ShouldStop(elev) {
 					elevio.SetMotorDirection(DataStructures.MotorDirStop)
 					elevio.SetDoorOpenLamp(true)
 					doorTimerDone = time.NewTimer(3 * time.Second)
@@ -77,7 +77,7 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 
 		case <-doorTimerDone.C:
 			elevio.SetDoorOpenLamp(false)
-			elev.Dir = getNextDir(elev)
+			elev.Dir = GetNextDir(elev)
 			elevio.SetMotorDirection(elev.Dir)
 			if elev.Dir != DataStructures.MotorDirStop {
 				elev.State = DataStructures.Moving

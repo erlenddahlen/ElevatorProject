@@ -25,19 +25,19 @@ func main() {
 
 	var GState DataStructures.GlobalState
 	//Init state, use backup if backup file available
-	GState = Manager.managerInit(GState, id)
+	GState = Manager.ManagerInit(GState, id)
 
 	FSMChannels := DataStructures.FSMChannels{
 		AtFloor:            make(chan int),
 		UpdateFromFSM:      make(chan DataStructures.Elev, 10),
-		UpdateFromManger:   make(chan DataStructures.GlobalState),
+		UpdateFromManager:   make(chan DataStructures.GlobalState),
 		ButtonPushed:       make(chan DataStructures.ButtonEvent),
 		AddCabOrder:        make(chan int),
 		AddCabOrderManager: make(chan int),
 	}
 
 	ManagerChannels := DataStructures.ManagerChannels{
-		InternalState:     make(chan DataStructures.GlobalState),
+		InternalState: make(chan DataStructures.GlobalState),
 		ExternalState:     make(chan DataStructures.GlobalState),
 		LostElev:          make(chan string),
 		AddHallOrder:      make(chan DataStructures.ButtonEvent),
