@@ -2,13 +2,55 @@ package Manager
 //
 import (
 	"../DataStructures"
-	"../PeerFSM"
+	"../FSM"
 	 "strconv"
 	 "fmt"
 	 "sort"
+	 "io/ioutil"
+	 "os"
 )
 
-func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string{ //Should reurn DataStructures.Elev
+func ManagerInit(GState DataStructures.GlobalState, id string) DataStructures.GlobalState {
+	DataStructures.HasBackup = false
+	var _, err1 = os.Stat(DataStructures.Backupfilename)
+	
+	if os.IsNotExist(err1) {
+		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
+		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, Queue1}
+		GState.Map = make(map[string]DataStructures.Elev)
+		GState.HallRequests = [4][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
+		GState.Id = id
+		GState.Map[GState.Id] = ElevState
+		var file, err1 = os.Create(DataStructures.Backupfilename)
+		isError(err1)
+		defer file.Close()
+		GStatejason, _ := json.MarshalIndent(GState, "", "")
+		_ = ioutil.WriteFile(DataStructures.Backupfilename, GStatejason, 0644)
+		return GState
+	} else {
+		DataStructures.HasBackup = true
+		GStateByte, err := ioutil.ReadFile(DataStructures.Backupfilename)
+		if err != nil {
+			fmt.Print(err)
+		}
+		error := json.Unmarshal(GStateByte, &GState)
+		if error != nil {
+			fmt.Println("error:", error)
+		}
+		GState.Map[GState.Id] = DataStructures.Elev{DataStructures.Unknown, DataStructures.MD_Up, 0, GState.Map[GState.Id].Queue}
+		return GState
+	}
+}
+
+func isError(err error) bool {
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	return (err != nil)
+}
+
+
+func ChooseElevator(elevators map[string]DataStructures.Elev, NewOrder DataStructures.ButtonEvent, GState DataStructures.GlobalState) string{
 	times := make([]int, len(elevators))
 	indexBestElevator := 0
 	keyBestElevator := GState.Id
@@ -57,7 +99,6 @@ func TimeToServeOrder(e DataStructures.Elev, button DataStructures.ButtonEvent) 
 	for {
 		if PeerFSM.ShouldStop(tempElevator) {
 			if tempElevator.Floor == button.Floor {
-				//We have "arrived" at destination
 				return timeUsed
 			}
 			tempElevator.Queue[tempElevator.Floor][DataStructures.BT_Cab] = false
