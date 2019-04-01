@@ -2,14 +2,15 @@ package DataStructures
 
 // Scaleable declaration of #floors and #elevators
 const (
-	NumFloors    = 4
-	NumButtons   = 3
-	Timeout      = 5
-	TravelTime   = 5
-	DoorOpenTime = 3
-	NumOfElev    = 3
-	SpamTime     = 1000 //ms
-	PortNumber   = 16700
+	NumFloors                = 4
+	NumButtons               = 3
+	Timeout                  = 5
+	TravelTime               = 5
+	DoorOpenTime             = 3
+	NumOfElev                = 3
+	SpamTime                 = 1000 //ms
+	PortNumber               = 16700
+	MotorstopWatchdogTimeout = 6 //s
 )
 
 // Name of backupfile

@@ -12,7 +12,7 @@ import (
 )
 
 var latestState DataStructures.GlobalState
-var StateUpdate DataStructures.GlobalState
+var stateUpdate DataStructures.GlobalState
 
 func SpamGlobalState(chMan DataStructures.ManagerChannels) {
 
@@ -169,18 +169,19 @@ func UpdateNetworkPeers(chMan DataStructures.ManagerChannels) {
 	seen := make(map[string]time.Time)
 	timeOut := DataStructures.Timeout * time.Second
 	receiveNet := make(chan DataStructures.GlobalState)
-	go bcast.Receiver(16700, receiveNet)
+	go bcast.Receiver(DataStructures.PortNumber, receiveNet)
 
 	for {
 		select {
-		case StateUpdate = <-receiveNet:
-			if latestState.Id != StateUpdate.Id {
-				seen[StateUpdate.Id] = time.Now()
-				chMan.ExternalState <- StateUpdate
-				chMan.UpdatefromSpam <- StateUpdate
+		case stateUpdate = <-receiveNet:
+			if latestState.Id != stateUpdate.Id {
+				seen[stateUpdate.Id] = time.Now()
+				chMan.ExternalState <- stateUpdate
+				chMan.UpdatefromSpam <- stateUpdate
 			}
 
 		default:
+			// Ckeck timeout for other other elevators
 			for k, v := range seen {
 				t := time.Now().Sub(v)
 				if t > timeOut {
@@ -193,22 +194,21 @@ func UpdateNetworkPeers(chMan DataStructures.ManagerChannels) {
 }
 
 func MotorstopWatchdog(chMan DataStructures.ManagerChannels, GState DataStructures.GlobalState) {
-	watchdogTimer := time.NewTimer(6 * time.Second)
+	watchdogTimer := time.NewTimer(DataStructures.MotorstopWatchdogTimeout * time.Second)
 	var changedState bool
-	var hallreqExist bool
-	var prevState DataStructures.GlobalState
-	prevState = GState
+	var hallreqExists bool
+	prevState := GState
 
 	for {
 		select {
 		case newState := <-chMan.UpdatefromSpam:
 			changedState = false
-			hallreqExist = false
+			hallreqExists = false
 
 			for floor := 0; floor < DataStructures.NumFloors; floor++ {
 				for button := 0; button < DataStructures.NumButtons-1; button++ {
 					if newState.HallRequests[floor][button] {
-						hallreqExist = true
+						hallreqExists = true
 						break
 					}
 				}
@@ -221,8 +221,8 @@ func MotorstopWatchdog(chMan DataStructures.ManagerChannels, GState DataStructur
 				}
 			}
 
-			if changedState || !(hallreqExist) {
-				watchdogTimer = time.NewTimer(6 * time.Second)
+			if changedState || !(hallreqExists) {
+				watchdogTimer = time.NewTimer(DataStructures.MotorstopWatchdogTimeout * time.Second)
 			}
 			prevState = newState
 
