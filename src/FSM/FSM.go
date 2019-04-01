@@ -19,7 +19,7 @@ func FSM(chMan DataStructures.ManagerChannels, chFSM DataStructures.FSMChannels,
 		chFSM.UpdateFromFSM <- elev
 
 		select {
-		case update := <-chFSM.UpdateFromManger:
+		case update := <-chFSM.UpdateFromManager:
 			elev.Queue = update.Map[id].Queue
 
 			switch elev.State {

@@ -16,12 +16,16 @@ func managerInit(GState DataStructures.GlobalState, id string) DataStructures.Gl
 	var _, err1 = os.Stat(DataStructures.Backupfilename)
 
 	if os.IsNotExist(err1) {
+
+		//Set up elevator in unknown state
 		Queue1 := [4][3]bool{{false, false, false}, {false, false, false}, {false, false, false}, {false, false, false}}
 		ElevState := DataStructures.Elev{DataStructures.Unknown, DataStructures.MotorDirUp, 0, Queue1}
 		GState.Map = make(map[string]DataStructures.Elev)
 		GState.HallRequests = [4][2]bool{{false, false}, {false, false}, {false, false}, {false, false}}
 		GState.Id = id
 		GState.Map[GState.Id] = ElevState
+
+		// Create backupfile
 		var file, err1 = os.Create(DataStructures.Backupfilename)
 		isError(err1)
 		defer file.Close()
@@ -114,25 +118,5 @@ func timeEstimateToServeOrder(e DataStructures.Elev, button DataStructures.Butto
 		tempElevator.Floor += int(tempElevator.Dir)
 		timeUsed += DataStructures.TravelTime
 		count = count + 1
-	}
-}
-
-func setHallAndCabLights(GState DataStructures.GlobalState, elev DataStructures.Elev, id string) {
-	for floor := 0; floor < DataStructures.NumFloors; floor++ {
-		if elev.Queue[floor][2] {
-			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_Cab, floor, false)
-		}
-		if GState.HallRequests[floor][0] {
-			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_HallUp, floor, false)
-		}
-		if GState.HallRequests[floor][1] {
-			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, true)
-		} else {
-			elevio.SetButtonLamp(DataStructures.BT_HallDown, floor, false)
-		}
 	}
 }

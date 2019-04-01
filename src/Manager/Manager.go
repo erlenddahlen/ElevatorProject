@@ -96,7 +96,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 					}
 				}
 			}
-			setHallAndCabLights(GState, GState.Map[id], id)
+			FSM.SetHallAndCabLights(GState, GState.Map[id], id)
 
 		case Id := <-chMan.LostElev:
 			lostElev := GState.Map[Id]
@@ -147,7 +147,7 @@ func UpdateGlobalState(chMan DataStructures.ManagerChannels, chFSM DataStructure
 				x.Queue[update.Floor][2] = false
 				GState.Map[GState.Id] = x
 			}
-			setHallAndCabLights(GState, GState.Map[id], id)
+			FSM.SetHallAndCabLights(GState, GState.Map[id], id)
 
 		case <-chMan.MotorstopWatchdog:
 			// Take responsibility for all hall orders

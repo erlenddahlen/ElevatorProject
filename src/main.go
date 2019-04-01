@@ -30,7 +30,7 @@ func main() {
 	FSMChannels := DataStructures.FSMChannels{
 		AtFloor:            make(chan int),
 		UpdateFromFSM:      make(chan DataStructures.Elev, 10),
-		UpdateFromManger:   make(chan DataStructures.GlobalState),
+		UpdateFromManager:  make(chan DataStructures.GlobalState),
 		ButtonPushed:       make(chan DataStructures.ButtonEvent),
 		AddCabOrder:        make(chan int),
 		AddCabOrderManager: make(chan int),
