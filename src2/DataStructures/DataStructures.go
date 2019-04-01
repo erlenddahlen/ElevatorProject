@@ -1,13 +1,12 @@
-package Config
+package DataStructures
 
 // Scaleable declaration of #floors and #elevators
 const (
 	NumFloors = 4
-	//	NumElevators = 3
 	NumButtons     = 3
-	TIMEOUT        = 5
-	TRAVEL_TIME    = 5
-	DOOR_OPEN_TIME = 3
+	Timeout        = 5
+	TravelTime    = 5
+	DoorOpenTime = 3
 	NumOfElev      = 3
 )
 
@@ -18,10 +17,10 @@ var HasBackup bool
 type ElevState int
 
 const (
-	UNKNOWN   ElevState = iota - 1
-	IDLE                = 0
-	DOOR_OPEN           = 1
-	MOVING              = 2
+	Unknown   ElevState = iota - 1
+	Idle                = 0
+	DoorOpen           = 1
+	Moving              = 2
 )
 
 type Direction int
