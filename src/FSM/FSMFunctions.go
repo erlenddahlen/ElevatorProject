@@ -1,27 +1,32 @@
+package FSM
 
-func GetNextDir(peer DataStructures.Elev) DataStructures.MotorDirection {
+import (
+	"../DataStructures"
+)
 
-	if peer.Dir == DataStructures.MD_Stop {
+func GetNextDir(elev DataStructures.Elev) DataStructures.MotorDirection {
 
-		if OrderAbove(peer) {
+	if elev.Dir == DataStructures.MD_Stop {
+
+		if OrderAbove(elev) {
 			return DataStructures.MD_Up
-		} else if OrderBelow(peer) {
+		} else if OrderBelow(elev) {
 			return DataStructures.MD_Down
 		} else {
 			return DataStructures.MD_Stop
 		}
-	} else if peer.Dir == DataStructures.MD_Up {
-		if OrderAbove(peer) {
+	} else if elev.Dir == DataStructures.MD_Up {
+		if OrderAbove(elev) {
 			return DataStructures.MD_Up
-		} else if OrderBelow(peer) {
+		} else if OrderBelow(elev) {
 			return DataStructures.MD_Down
 		} else {
 			return DataStructures.MD_Stop
 		}
 	} else {
-		if OrderBelow(peer) {
+		if OrderBelow(elev) {
 			return DataStructures.MD_Down
-		} else if OrderAbove(peer) {
+		} else if OrderAbove(elev) {
 			return DataStructures.MD_Up
 		} else {
 			return DataStructures.MD_Stop
@@ -30,10 +35,10 @@ func GetNextDir(peer DataStructures.Elev) DataStructures.MotorDirection {
 	return DataStructures.MD_Stop
 }
 
-func OrderAbove(peer DataStructures.Elev) bool {
-	for floor := peer.Floor + 1; floor < DataStructures.NumFloors; floor++ {
+func OrderAbove(elev DataStructures.Elev) bool {
+	for floor := elev.Floor + 1; floor < DataStructures.NumFloors; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
-			if peer.Queue[floor][button] {
+			if elev.Queue[floor][button] {
 				return true
 			}
 		}
@@ -41,10 +46,10 @@ func OrderAbove(peer DataStructures.Elev) bool {
 	return false
 }
 
-func OrderBelow(peer DataStructures.Elev) bool {
-	for floor := 0; floor < peer.Floor; floor++ {
+func OrderBelow(elev DataStructures.Elev) bool {
+	for floor := 0; floor < elev.Floor; floor++ {
 		for button := 0; button < DataStructures.NumButtons; button++ {
-			if peer.Queue[floor][button] {
+			if elev.Queue[floor][button] {
 				return true
 			}
 		}
@@ -52,21 +57,16 @@ func OrderBelow(peer DataStructures.Elev) bool {
 	return false
 }
 
-func ShouldStop(peer DataStructures.Elev) bool {
-	//fmt.Println("peer.Dir: ", peer.Dir)
-	//fmt.Println("peer.Floor: ", peer.Floor)
-	switch peer.Dir {
+func ShouldStop(elev DataStructures.Elev) bool {
+	switch elev.Dir {
 	case DataStructures.MD_Up:
-		//fmt.Println("MD_Up: ", peer.Queue[peer.Floor][DataStructures.BT_HallUp], peer.Queue[peer.Floor][DataStructures.BT_Cab], !OrderAbove(peer))
-		return (peer.Queue[peer.Floor][DataStructures.BT_HallUp] || peer.Queue[peer.Floor][DataStructures.BT_Cab] || !OrderAbove(peer))
+		return (elev.Queue[elev.Floor][DataStructures.BT_HallUp] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderAbove(elev))
+
 	case DataStructures.MD_Down:
-		//fmt.Println("MD_Down: ", peer.Queue[peer.Floor][DataStructures.BT_HallDown],  peer.Queue[peer.Floor][DataStructures.BT_Cab], !OrderBelow(peer))
-		return (peer.Queue[peer.Floor][DataStructures.BT_HallDown] || peer.Queue[peer.Floor][DataStructures.BT_Cab] || !OrderBelow(peer))
+		return (elev.Queue[elev.Floor][DataStructures.BT_HallDown] || elev.Queue[elev.Floor][DataStructures.BT_Cab] || !OrderBelow(elev))
+
 	case DataStructures.MD_Stop:
-		// fmt.Println("MD_Stop: ", peer.Queue[peer.Floor][DataStructures.BT_HallUp ], peer.Queue[peer.Floor][DataStructures.BT_HallDown], peer.Queue[peer.Floor][DataStructures.BT_Cab])
-		// if(peer.Queue[peer.Floor][DataStructures.BT_HallUp ] || peer.Queue[peer.Floor][DataStructures.BT_HallDown] || peer.Queue[peer.Floor][DataStructures.BT_Cab]){
-		//     return true
-		// }
+
 	default:
 	}
 	return false
