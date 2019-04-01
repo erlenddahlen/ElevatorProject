@@ -17,7 +17,7 @@ Extra packages:
 - elevio
 - DataStructures
 
-## FSM
+###  FSM
 
 The FSM module is the Finite State Machine for controlling one elevator. It consists four states and three main events:
 
@@ -36,13 +36,13 @@ The FSM module also have a GO routine for checking if buttons are pushed and if 
 
 (#1) The functions in FSMFunctions.go handles these operations.
 
-## Manager
+###  Manager
 
 The Manager module
 
 ansvar for å alltd ha ny informasjon og sende dette ut, og sende denne infoen videre til FSM
 
-## Network
+###  Network
 
 
 
